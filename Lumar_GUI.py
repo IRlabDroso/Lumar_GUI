@@ -17,6 +17,9 @@ class App(Tk):
         self.userDict = {"Nicolas": 1, "Yann": 2,
                          "Ilham": 3, "Ivan": 4, "Dan": 5}
         self.Driver = ["OR42b", "OR47b", "OR59b", "OR22ab", "ORCO"]
+        self.promotor = ["OR42b", "OR47b", "OR59b", "OR22ab", "ORCO"]
+        self.replaced = ["Gal4"]
+        self.KIKO = ["Knockout", "Knockin", "other"]
         self.OR = ["DmOR%d" % id for id in range(1, 30)]
         self.reporter = ["GCaMP7f"]
         self.T2A = ["F", "TB", "TA"]
@@ -273,8 +276,14 @@ class App(Tk):
     def createNewOr(self, Newmaster):
         # Function that is trigerred when we create a new OR and we add it to the combobox
 
+        # avoid to create a duplicated name
+        if self.newOR.get() in list(globals()[f"{self.widgetsName[2]}"]["values"]):
+            messagebox.showerror(
+                "showerror", "Enter a name that does not already exist!")
+            Newmaster.lift()
+
         # Test if the format correspond
-        if bool(re.search("\w\wOR\d", str(self.newOR.get()))) & str(self.newOR.get())[0].isupper() & str(self.newOR.get())[2:3].isupper():
+        elif bool(re.search("\w\wOR\d", str(self.newOR.get()))) & str(self.newOR.get())[0].isupper() & str(self.newOR.get())[2:3].isupper():
             for i in self.widgetsName:
 
                 if re.search("\d{1,9}_2", i):
@@ -289,12 +298,17 @@ class App(Tk):
             Newmaster.destroy()  # quit the new window
         else:
             messagebox.showerror(
-                "showerror", "Enter a correct name that follow the rules !")
+                "showerror", "Enter a correct name that follow the rules!")
             Newmaster.lift()
 
     def createNewDriver(self, Newmaster):
         # Function that is trigerred when we create a new OR and we add it to the combobox
 
+        # avoid to create a duplicated name
+        if self.newOR.get() in list(globals()[f"{self.widgetsName[4]}"]["values"]):
+            messagebox.showerror(
+                "showerror", "Enter a name that does not already exist!")
+            Newmaster.lift()
         # Test if the format correspond
 
         for i in self.widgetsName:
@@ -390,8 +404,12 @@ class App(Tk):
             if re.search("\d{1,9}_2", i):
                 globals()[f"{i}"].set(str(self.FirstOR.get()))
             # search for the second combobox which is the Driver and fix it to the FirstDriver selected
-            if re.search("\d{1,9}_4", i):
-                globals()[f"{i}"].set(str(self.FirstDriver.get()))
+            elif re.search("\d{1,9}_4", i):
+                globals()[f"{i}"].set(str(self.FirstPromotor.get()))
+            elif re.search("\d{1,9}_6", i):
+                globals()[f"{i}"].set(str(self.FirstReplaced.get()))
+            elif re.search("\d{1,9}_8", i):
+                globals()[f"{i}"].set(str(self.FirstKIKO.get()))
 
     def reset_scrollregion(self, event):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
@@ -410,9 +428,11 @@ class App(Tk):
         # Function to create the conditions frames which all informations for each
         # First condition frame contains callback to autofill others conditions
 
-        self.NumColCondFrame = 13
+        self.NumColCondFrame = 17
         self.FirstOR = StringVar()
-        self.FirstDriver = StringVar()
+        self.FirstPromotor = StringVar()
+        self.FirstReplaced = StringVar()
+        self.FirstKIKO = StringVar()
         self.widgetsName = ["self.widget_%d_%d" % (x, j) for x in range(
             1, (int(self.CondNum.get())+1)) for j in range(self.NumColCondFrame)]
 
@@ -429,9 +449,17 @@ class App(Tk):
                                Label(self.frames[self.count], text="OR:"),
                                Combobox(
                                    self.frames[self.count], width=12, state="readonly", values=self.OR, textvariable=self.FirstOR),
-                               Label(self.frames[self.count], text="Driver:"),
+                               Label(self.frames[self.count],
+                                     text="Promotor:"),
                                Combobox(self.frames[self.count], width=12, state="readonly",
-                                        values=self.Driver, textvariable=self.FirstDriver),
+                                        values=self.promotor, textvariable=self.FirstPromotor),
+                               Label(self.frames[self.count],
+                                     text="replaced:"),
+                               Combobox(self.frames[self.count], width=12, state="readonly",
+                                        values=self.replaced, textvariable=self.FirstReplaced),
+                               Label(self.frames[self.count], text="KO/KI:"),
+                               Combobox(self.frames[self.count], width=12, state="readonly",
+                                        values=self.KIKO, textvariable=self.FirstKIKO),
                                Label(self.frames[self.count],
                                      text="Reporter:"),
                                Combobox(
@@ -451,9 +479,17 @@ class App(Tk):
                                Label(self.frames[self.count], text="OR:"),
                                Combobox(
                                    self.frames[self.count], width=12, state="readonly", values=self.OR),
-                               Label(self.frames[self.count], text="Driver:"),
-                               Combobox(
-                                   self.frames[self.count], width=12, state="readonly", values=self.Driver),
+                               Label(self.frames[self.count],
+                                     text="Promotor:"),
+                               Combobox(self.frames[self.count], width=12, state="readonly",
+                                        values=self.promotor),
+                               Label(self.frames[self.count],
+                                     text="replaced:"),
+                               Combobox(self.frames[self.count], width=12, state="readonly",
+                                        values=self.replaced),
+                               Label(self.frames[self.count], text="KO/KI:"),
+                               Combobox(self.frames[self.count], width=12, state="readonly",
+                                        values=self.KIKO),
                                Label(self.frames[self.count],
                                      text="Reporter:"),
                                Combobox(
@@ -475,7 +511,8 @@ class App(Tk):
                 globals()[f"{x}"] = widgetsList[id_widgets]
 
                 if re.search("combobox", str(globals()[f"{x}"])):
-                    if re.search("combobox6", str(globals()[f"{x}"])):
+                    if re.search("combobox8", str(globals()[f"{x}"])):
+                        # select day of emergence as 3
                         globals()[f"{x}"].current(2)
                     elif (x == self.widgetsName[2]) | (x == self.widgetsName[4]):
                         # If first condition we add this function to autofill
@@ -489,11 +526,21 @@ class App(Tk):
                 id_widgets += 1
 
             self.entries.append(listtoappend)
-            row_col = 0
+            row_col_1 = 0
+            row_col_2 = 1
+            number = 0
             for j in self.entries[self.count]:
-
-                j.grid(row=(4+i), column=(row_col), padx=(0, 20))
-                row_col += 1
+                if number < 9:
+                    print(1)
+                    j.grid(row=(4+(i*2)), column=(row_col_1),
+                           padx=(0, 20), pady=(0, 5))
+                    row_col_1 += 1
+                    number += 1
+                else:
+                    print(2)
+                    j.grid(row=(5+(i*2)), column=(row_col_2), padx=(0, 20))
+                    row_col_2 += 1
+                    number += 1
 
             self.count += 1
 
