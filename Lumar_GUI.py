@@ -233,6 +233,9 @@ class App(Tk):
             for i in range(int(self.OdorantNum.get())*2):
                 self.header.append(("Trial "+str((i+1))))
 
+        for i in range(int(self.CondNum.get())):
+            self.header.append("Remarks Cond "+str(i+1))
+
         ### Create the data ###
         self.row = []
         ### EXP_id ###
@@ -248,10 +251,11 @@ class App(Tk):
         for i in range(1, 5):
             if(i <= int(self.CondNum.get())):
                 text = ""
-                for col in range(2, self.NumColCondFrame, 2):
+                for col in range(2, (self.NumColCondFrame-2), 2):
+                    print(self.widgetsName[(((i-1)*self.NumColCondFrame)+col)])
                     text += globals()[
                         f"{self.widgetsName[(((i-1)*self.NumColCondFrame)+col)]}"].get()
-                    if(col != (self.NumColCondFrame-1)):
+                    if(col != (self.NumColCondFrame-3)):
                         text += "_"
 
                 self.row.append(str(text))
@@ -308,6 +312,12 @@ class App(Tk):
                     globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+5)]}"].get())
                 list_vials.append(vial_number)
                 list_vials.append(1)
+
+        ### Remarks ###
+        for i in range(1, (int(self.CondNum.get())+1)):
+            remark = globals()[
+                f"{self.widgetsName[((i*self.NumColCondFrame)-1)]}"].get("1.0", "end-1c")
+            self.row.append(remark)
 
         with open("C:/Users/irlab/Desktop/Lumar_GUI/Exp_infos.csv", "w", encoding='UTF8', newline='') as self.f:
             writer = csv.writer(self.f, dialect='excel', delimiter=',')
@@ -494,7 +504,7 @@ class App(Tk):
         # Function to create the conditions frames which all informations for each
         # First condition frame contains callback to autofill others conditions
 
-        self.NumColCondFrame = 17
+        self.NumColCondFrame = 19
         self.FirstOR = StringVar()
         self.FirstPromotor = StringVar()
         self.FirstReplaced = StringVar()
@@ -538,7 +548,10 @@ class App(Tk):
                                    self.frames[self.count], width=12, state="readonly", values=self.sex),
                                Label(self.frames[self.count], text="Age:"),
                                Combobox(
-                                   self.frames[self.count], width=12, state="readonly", values=self.Age)
+                                   self.frames[self.count], width=12, state="readonly", values=self.Age),
+                               Label(self.frames[self.count], text="Remarks:"),
+                               Text(self.frames[self.count],
+                                    width=12, height=3)
                                ]
             else:
                 widgetsList = [Label(self.frames[self.count], text=str("Condition " + str(i+1) + ":")),
@@ -568,7 +581,10 @@ class App(Tk):
                                    self.frames[self.count], width=12, state="readonly", values=self.sex),
                                Label(self.frames[self.count], text="Age:"),
                                Combobox(
-                                   self.frames[self.count], width=12, state="readonly", values=self.Age)
+                                   self.frames[self.count], width=12, state="readonly", values=self.Age),
+                               Label(self.frames[self.count], text="Remarks:"),
+                               Text(self.frames[self.count],
+                                    width=12, height=3)
                                ]
 
             id_widgets = 0
@@ -577,7 +593,6 @@ class App(Tk):
                 globals()[f"{x}"] = widgetsList[id_widgets]
 
                 if re.search("combobox", str(globals()[f"{x}"])):
-                    print(str(globals()[f"{x}"]))
                     if re.search("!combobox4", str(globals()[f"{x}"])):
                         # select day of emergence as 3
                         globals()[f"{x}"].current(2)
@@ -602,11 +617,17 @@ class App(Tk):
             for j in self.entries[self.count]:
                 if number < 9:
                     j.grid(row=(4+(i*2)), column=(row_col_1),
-                           padx=(0, 20), pady=(0, 5))
+                           padx=(0, 20), pady=(5, 0))
+                    row_col_1 += 1
+                    number += 1
+                elif number == (self.NumColCondFrame-2):
+                    j.grid(row=(4+(i*2)), column=(row_col_1),
+                           padx=(0, 20), pady=(5, 0))
                     row_col_1 += 1
                     number += 1
                 else:
-                    j.grid(row=(5+(i*2)), column=(row_col_2), padx=(0, 20))
+                    j.grid(row=(5+(i*2)), column=(row_col_2),
+                           padx=(0, 20), pady=(0, 5))
                     row_col_2 += 1
                     number += 1
 
