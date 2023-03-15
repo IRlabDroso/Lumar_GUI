@@ -7,11 +7,68 @@ import re
 import csv
 
 
+class AutocompleteCombobox(Combobox):
+
+    def set_completion_list(self, completion_list):
+        """Use our completion list as our drop down selection menu, arrows move through menu."""
+        self._completion_list = sorted(
+            completion_list, key=str.lower)  # Work with a sorted list
+        self._hits = []
+        self._hit_index = 0
+        self.position = 0
+        self.bind('<KeyRelease>', self.handle_keyrelease)
+        self['values'] = self._completion_list  # Setup our popup menu
+
+    def autocomplete(self, delta=0):
+        """autocomplete the Combobox, delta may be 0/1/-1 to cycle through possible hits"""
+        if delta:  # need to delete selection otherwise we would fix the current position
+            self.delete(self.position, END)
+        else:  # set position to end so selection starts where textentry ended
+            self.position = len(self.get())
+        # collect hits
+        _hits = []
+        for element in self._completion_list:
+            if element.lower().startswith(self.get().lower()):  # Match case insensitively
+                _hits.append(element)
+        if len(_hits) == 0:
+            print("not found")
+            _hits = [self._completion_list[0]]
+        # if we have a new hit list, keep this in mind
+        if _hits != self._hits:
+            self._hit_index = 0
+            self._hits = _hits
+        # only allow cycling if we are in a known hit list
+        if _hits == self._hits and self._hits:
+            self._hit_index = (self._hit_index + delta) % len(self._hits)
+        # now finally perform the auto completion
+        if self._hits:
+            self.delete(0, END)
+            self.insert(0, self._hits[self._hit_index])
+            self.select_range(self.position, END)
+
+    def handle_keyrelease(self, event):
+        """event handler for the keyrelease event on this widget"""
+        if event.keysym == "BackSpace":
+            self.delete(self.index(INSERT), END)
+            self.position = self.index(END)
+        if event.keysym == "Left":
+            if self.position < self.index(END):  # delete the selection
+                self.delete(self.position, END)
+            else:
+                self.position = self.position-1  # delete one character
+                self.delete(self.position, END)
+        if event.keysym == "Right":
+            self.position = self.index(END)  # go to end (no selection)
+        if len(event.keysym) == 1:
+            self.autocomplete()
+        # No need for up/down, we'll jump to the popup
+        # list at the position of the autocompletion
+
+
 class App(Tk):
 
     def __init__(self, master):
         self.master = master
-        print("hello")
 
         ### Variables for controlled parameters ###
         self.userDict = {"Nicolas": 1, "Yann": 2,
@@ -136,9 +193,17 @@ class App(Tk):
         self.OdorantIBEntry.grid(column=3, row=5)
         self.OdorantIBEntry.current(0)
 
-        combo = AutocompleteCombobox(self.ScrollFrame, width=20, completevalues=[
-                                     "Water", "none", "test1", "test2"])
+        combo = AutocompleteEntry(self.ScrollFrame, width=20, completevalues=[
+            "Water", "none", "test1", "test2"])
+
+        self.comboVar = StringVar()
+        combo = AutocompleteCombobox(
+            self.ScrollFrame, textvariable=self.comboVar)
+        test_list = ("Water", "test1", "test2", "test3")
+        combo.set_completion_list(test_list)
         combo.grid(column=4, row=5)
+        combo.focus_set()
+        print(self.comboVar.get())
 
         ##### Create CSV button #####
         self.CreateButton = Button(
@@ -294,6 +359,7 @@ class App(Tk):
                     # set the current selection to the new OR created
                     globals()[f"{i}"].current(
                         (len(globals()[f"{i}"]["values"])-1))
+                    globals()[f"{i}"].set_completion_list(newlist)
 
             Newmaster.destroy()  # quit the new window
         else:
@@ -447,19 +513,19 @@ class App(Tk):
                 # if first conditions add the textvariables to autofill later and bind the function below
                 widgetsList = [Label(self.frames[self.count], text=str("Condition " + str(i+1) + ":")),
                                Label(self.frames[self.count], text="OR:"),
-                               Combobox(
-                                   self.frames[self.count], width=12, state="readonly", values=self.OR, textvariable=self.FirstOR),
+                               AutocompleteCombobox(
+                                   self.frames[self.count], width=12, values=self.OR, textvariable=self.FirstOR),
                                Label(self.frames[self.count],
                                      text="Promotor:"),
-                               Combobox(self.frames[self.count], width=12, state="readonly",
-                                        values=self.promotor, textvariable=self.FirstPromotor),
+                               AutocompleteCombobox(self.frames[self.count], width=12,
+                                                    values=self.promotor, textvariable=self.FirstPromotor),
                                Label(self.frames[self.count],
                                      text="replaced:"),
-                               Combobox(self.frames[self.count], width=12, state="readonly",
-                                        values=self.replaced, textvariable=self.FirstReplaced),
+                               AutocompleteCombobox(self.frames[self.count], width=12,
+                                                    values=self.replaced, textvariable=self.FirstReplaced),
                                Label(self.frames[self.count], text="KO/KI:"),
-                               Combobox(self.frames[self.count], width=12, state="readonly",
-                                        values=self.KIKO, textvariable=self.FirstKIKO),
+                               AutocompleteCombobox(self.frames[self.count], width=12,
+                                                    values=self.KIKO, textvariable=self.FirstKIKO),
                                Label(self.frames[self.count],
                                      text="Reporter:"),
                                Combobox(
@@ -477,19 +543,19 @@ class App(Tk):
             else:
                 widgetsList = [Label(self.frames[self.count], text=str("Condition " + str(i+1) + ":")),
                                Label(self.frames[self.count], text="OR:"),
-                               Combobox(
-                                   self.frames[self.count], width=12, state="readonly", values=self.OR),
+                               AutocompleteCombobox(
+                                   self.frames[self.count], width=12, values=self.OR),
                                Label(self.frames[self.count],
                                      text="Promotor:"),
-                               Combobox(self.frames[self.count], width=12, state="readonly",
-                                        values=self.promotor),
+                               AutocompleteCombobox(self.frames[self.count], width=12,
+                                                    values=self.promotor),
                                Label(self.frames[self.count],
                                      text="replaced:"),
-                               Combobox(self.frames[self.count], width=12, state="readonly",
-                                        values=self.replaced),
+                               AutocompleteCombobox(self.frames[self.count], width=12, state="readonly",
+                                                    values=self.replaced),
                                Label(self.frames[self.count], text="KO/KI:"),
-                               Combobox(self.frames[self.count], width=12, state="readonly",
-                                        values=self.KIKO),
+                               AutocompleteCombobox(self.frames[self.count], width=12,
+                                                    values=self.KIKO),
                                Label(self.frames[self.count],
                                      text="Reporter:"),
                                Combobox(
@@ -511,11 +577,15 @@ class App(Tk):
                 globals()[f"{x}"] = widgetsList[id_widgets]
 
                 if re.search("combobox", str(globals()[f"{x}"])):
-                    if re.search("combobox8", str(globals()[f"{x}"])):
+                    print(str(globals()[f"{x}"]))
+                    if re.search("!combobox4", str(globals()[f"{x}"])):
                         # select day of emergence as 3
                         globals()[f"{x}"].current(2)
-                    elif (x == self.widgetsName[2]) | (x == self.widgetsName[4]):
+                    elif (x == self.widgetsName[2]) | (x == self.widgetsName[4]) | (x == self.widgetsName[6]) | (x == self.widgetsName[8]):
                         # If first condition we add this function to autofill
+                        globals()[f"{x}"].set_completion_list(
+                            (globals()[f"{x}"]["values"]))
+                        globals()[f"{x}"].focus_set()
                         globals()[f"{x}"].bind(
                             "<<ComboboxSelected>>", self.callback)
                         globals()[f"{x}"].current(0)
@@ -531,13 +601,11 @@ class App(Tk):
             number = 0
             for j in self.entries[self.count]:
                 if number < 9:
-                    print(1)
                     j.grid(row=(4+(i*2)), column=(row_col_1),
                            padx=(0, 20), pady=(0, 5))
                     row_col_1 += 1
                     number += 1
                 else:
-                    print(2)
                     j.grid(row=(5+(i*2)), column=(row_col_2), padx=(0, 20))
                     row_col_2 += 1
                     number += 1
