@@ -3,6 +3,7 @@ from tkinter import messagebox
 from tkinter.ttk import *
 from tkcalendar import *
 from ttkwidgets.autocomplete import *
+from pandas import *
 import re
 import csv
 
@@ -82,7 +83,9 @@ class App(Tk):
         self.T2A = ["F", "TB", "TA"]
         self.sex = ["M", "F"]
         self.Age = list(range(1, 10))
-        self.odorList = ["odor1", "odor2", "odor3"]
+        #self.odorList = ["odor1", "odor2", "odor3"]
+        odors = read_csv("Corrected_odors.csv")
+        self.odorList = odors["Odor_name"].tolist()
 
         ### params for each conditions create ###
         self.frames = []
@@ -97,6 +100,7 @@ class App(Tk):
         master.title("Test_GUI")
         master.geometry("1500x1000")
         master.resizable(True, True)
+        master.wm_iconbitmap("Fluo_fly.ico")
 
         ### Frames ###
         # Create the main frame within the canva that got the scrollbars
