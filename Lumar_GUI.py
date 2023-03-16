@@ -3,7 +3,6 @@ from tkinter import messagebox
 from tkinter.ttk import *
 from tkcalendar import *
 from ttkwidgets.autocomplete import *
-from pandas import *
 import re
 import csv
 
@@ -32,7 +31,6 @@ class AutocompleteCombobox(Combobox):
             if element.lower().startswith(self.get().lower()):  # Match case insensitively
                 _hits.append(element)
         if len(_hits) == 0:
-            print("not found")
             _hits = [self._completion_list[0]]
         # if we have a new hit list, keep this in mind
         if _hits != self._hits:
@@ -84,8 +82,8 @@ class App(Tk):
         self.sex = ["M", "F"]
         self.Age = list(range(1, 10))
         #self.odorList = ["odor1", "odor2", "odor3"]
-        odors = read_csv("Corrected_odors.csv")
-        self.odorList = odors["Odor_name"].tolist()
+        odors = self.load_csv("C:/Users/irlab/gh-repos/Lumar_GUI/Lumar_GUI/Corrected_odors.csv")
+        self.odorList = list(odors.values())
 
         ### params for each conditions create ###
         self.frames = []
@@ -100,7 +98,7 @@ class App(Tk):
         master.title("Test_GUI")
         master.geometry("1500x1000")
         master.resizable(True, True)
-        master.wm_iconbitmap("Fluo_fly.ico")
+        #master.wm_iconbitmap("Fluo_fly.ico")
 
         ### Frames ###
         # Create the main frame within the canva that got the scrollbars
@@ -207,7 +205,6 @@ class App(Tk):
         combo.set_completion_list(test_list)
         combo.grid(column=4, row=5)
         combo.focus_set()
-        print(self.comboVar.get())
 
         ##### Create CSV button #####
         self.CreateButton = Button(
@@ -256,7 +253,6 @@ class App(Tk):
             if(i <= int(self.CondNum.get())):
                 text = ""
                 for col in range(2, (self.NumColCondFrame-2), 2):
-                    print(self.widgetsName[(((i-1)*self.NumColCondFrame)+col)])
                     text += globals()[
                         f"{self.widgetsName[(((i-1)*self.NumColCondFrame)+col)]}"].get()
                     if(col != (self.NumColCondFrame-3)):
@@ -478,7 +474,6 @@ class App(Tk):
 
     def callback(self, event):
         # Function to autoFill the conditions comboboxs
-        print(self.FirstOR.get())
         for i in self.widgetsName:
             # search for the first combobox which is the OR and fix it to the FirstOR selected
             if re.search("\d{1,9}_2", i):
@@ -637,6 +632,23 @@ class App(Tk):
 
             self.count += 1
 
+    # Load the CSV file for the odours
+    def load_csv(self,filename):
+        odour = dict()
+        # Open file in read mode
+        file = open(filename,"r")
+        # Reading file
+        csv_reader = csv.reader(file)
+        first_line = True
+        for row in csv_reader:
+            if first_line:
+                first_line=False
+                continue
+            odour[row[0]] = row[1]
+        
+        return odour
+    
+    
     def drawOdorants(self):
         # Function to create the trials frames which all informations for each
 
@@ -654,8 +666,7 @@ class App(Tk):
                 row=(self.count+6+i), column=1, columnspan=3, pady=10)
 
             widgetsListOD = [Label(self.framesOD[self.countOD], text=str("Trial: " + str(i+1) + ":")),
-                             Combobox(self.framesOD[self.countOD], width=12, state="normal", values=[
-                                      "test1", "test2", "test3"]),
+                             AutocompleteCombobox(self.framesOD[self.countOD], width=30, state="normal", values=self.odorList),
                              Label(self.framesOD[self.countOD], text=str(
                                  "Dilution: " + str(i+1) + ":")),
                              Combobox(self.framesOD[self.countOD], width=12, state="normal", values=list(
@@ -672,12 +683,15 @@ class App(Tk):
                 globals()[f"{x}"] = widgetsListOD[id_widgets]
 
                 if re.search("combobox", str(globals()[f"{x}"])):
-                    if re.search("combobox2", str(globals()[f"{x}"])):
+                    if re.search("!combobox$", str(globals()[f"{x}"])):
                         globals()[f"{x}"].current(2)
-                    elif re.search("combobox3", str(globals()[f"{x}"])):
+                    elif re.search("!combobox2", str(globals()[f"{x}"])):
                         globals()[f"{x}"].current(id_vials)
                         id_vials += 1
                     else:
+                        globals()[f"{x}"].set_completion_list(
+                            (globals()[f"{x}"]["values"]))
+                        globals()[f"{x}"].focus_set()
                         globals()[f"{x}"].current(0)
 
                 listtoappend.append(globals()[f"{x}"])
