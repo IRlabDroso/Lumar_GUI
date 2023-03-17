@@ -74,8 +74,8 @@ class App(Tk):
                          "Ilham": 3, "Ivan": 4, "Dan": 5}
         self.Driver = ["OR42b", "OR47b", "OR59b", "OR22ab", "ORCO"]
         self.promotor = ["OR42b", "OR47b", "OR59b", "OR22ab", "ORCO"]
-        self.replaced = ["Gal4"]
-        self.KIKO = ["Knockout", "Knockin", "other"]
+        self.replaced = ["Gal4","Boosted Gal4"]
+        self.KIKO = ["Knockin", "Transgene", "other"]
         self.OR = ["DmOR%d" % id for id in range(1, 30)]
         self.reporter = ["GCaMP7f"]
         self.T2A = ["F", "TB", "TA"]
@@ -195,17 +195,6 @@ class App(Tk):
         self.OdorantIBEntry.grid(column=3, row=5)
         self.OdorantIBEntry.current(0)
 
-        combo = AutocompleteEntry(self.ScrollFrame, width=20, completevalues=[
-            "Water", "none", "test1", "test2"])
-
-        self.comboVar = StringVar()
-        combo = AutocompleteCombobox(
-            self.ScrollFrame, textvariable=self.comboVar)
-        test_list = ("Water", "test1", "test2", "test3")
-        combo.set_completion_list(test_list)
-        combo.grid(column=4, row=5)
-        combo.focus_set()
-
         ##### Create CSV button #####
         self.CreateButton = Button(
             self.ScrollFrame, text="Create CSV", command=self.create_CSV)
@@ -216,12 +205,156 @@ class App(Tk):
         #         widget['font'] = ("Arial", 10)
 
     def create_CSV(self):
-        # function to create the header and the data of EXP_info.csv file
-
+        
+        # check if all is filled correctly
         if(int(self.OdorantNum.get()) == 0 | int(self.CondNum.get()) == 0):
             messagebox.showerror(
                 "showerror", "Select at least one condition and one odorant !")
             return
+        
+
+        ##### Creation Conditions_info.csv #####
+        ### Create the header ###
+        self.header = ["Exp_id", "Condition_id", "OR","promotor","driver","transgene","reporter","T2A","sex", "age","Transgene_name", "remarks"]
+        
+        ### Create the data ###
+        self.rows = []
+        ### EXP_id ###
+        exp_id = str(self.userDict[self.id.get()]) + "_" + \
+            str(self.date.get()).replace("/", "")
+
+        ### EachCond ##
+        for i in range(1,(int(self.CondNum.get())+1)):
+            self.row = []
+
+            ### Exp_id ###
+            self.row.append(exp_id)
+
+            ### Condition_id ###
+            cond_id = "cond_"+exp_id+"_"+str(i)
+            self.row.append(cond_id)
+
+            ### Transgene information ###
+            transgene_name = ""
+            for col in range(2, self.NumColCondFrame, 2):
+                ### Transgene_name ###
+
+                if col < int(self.NumColCondFrame-2):
+                    transgene_name += globals()[
+                        f"{self.widgetsName[(((i-1)*self.NumColCondFrame)+col)]}"].get()
+                    if(col != (self.NumColCondFrame-3)):
+                        transgene_name += "_"
+                else:
+                    ### special get for textinput ###
+                    toappend = globals()[f"{self.widgetsName[(((i-1)*self.NumColCondFrame)+col)]}"].get("1.0", "end-1c")
+                    self.row.append(str(toappend))
+                    continue
+                ### Others ###
+
+                toappend = globals()[f"{self.widgetsName[(((i-1)*self.NumColCondFrame)+col)]}"].get()
+                self.row.append(str(toappend))
+            self.row.append(str(transgene_name))
+            self.rows.append(self.row)
+
+        ### write the Trials_info.csv file ###
+        with open("C:/Users/irlab/gh-repos/Lumar_GUI/Lumar_GUI/Conditions_info.csv", "w", encoding='UTF8', newline='') as self.f:
+            writer = csv.writer(self.f, dialect='excel', delimiter=',')
+            writer.writerow(self.header)
+            for i in self.rows:
+                writer.writerow(i)
+
+        ##### Creation Trials_info.csv #####
+        ### Create the header ###
+        self.header = ["Exp_id", "Trial_id", "odor","dilution"]
+        
+        ### create trials data ###
+
+        ### EachTrial ###
+        IBOD_name = ["%s %d" % (self.OdorantIB.get(), id)
+                     for id in range(1, (int(self.OdorantNum.get())+1))]
+        diff_odors = []
+        id_repeat = dict()
+        self.rows = []
+
+        ### if no water in between odors ###
+        if(self.OdorantIB.get() == "None"):
+
+            for i in range(1,(int(self.OdorantNum.get())+2)):
+                self.row = []
+                
+                ### exp_id ###
+                self.row.append(exp_id)
+
+                ### trial_id ###
+                trial_id = "Trial_"+ exp_id +"_"+str(i)
+                self.row.append(trial_id)
+            
+                ### Odor + dilution ###
+                if(i==1):
+                    # if we don't have in between selected we put first odor as water then nothing
+                    self.row.append("Water 1")
+                    self.row.append(0)
+                else:
+                    odor = str(globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+1)]}"].get())
+                    dilution = str(globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+3)]}"].get())
+                    if odor in diff_odors:
+                        if odor not in id_repeat.keys():
+                            id_repeat[odor] = 2
+                        else:
+                            id_repeat[odor] = id_repeat[odor]+1
+                    else:
+                        diff_odors.append(odor)
+                    
+                    odor = odor + "_" + str(id_repeat[odor])
+                    
+                    self.row.append(odor)
+                    self.row.append(dilution)  
+                self.rows.append(self.row)
+
+        ### if water in between odors ###
+        else:
+            # if we do have an ib between odorant just intercal it between testing odors
+            for i in range(1, ((int(self.OdorantNum.get())+1)*2)):
+                self.row = []
+                
+                ### exp_id ###
+                self.row.append(exp_id)
+
+                ### trial_id ###
+                trial_id = "Trial_"+exp_id+"_"+str(i)
+                self.row.append(trial_id)
+            
+                ### Odor + dilution ###
+                if i%2 == 0:
+                    id = int(i/2)
+                    odor = str(globals()[f"{self.widgetsNameOD[int(((id-1)*self.NumColODFrame)+1)]}"].get())
+                    dilution = str(globals()[f"{self.widgetsNameOD[int(((id-1)*self.NumColODFrame)+3)]}"].get())
+                    if odor in diff_odors:
+                        if odor not in id_repeat.keys():
+                            id_repeat[odor] = 2
+                        else:
+                            id_repeat[odor] = id_repeat[odor]+1
+                        
+                        odor = odor + "_" + str(id_repeat[odor])
+                    else:
+                        diff_odors.append(odor)
+                    
+                    self.row.append(odor)
+                    self.row.append(dilution)
+                else:
+                    water_name = "Water "+ str((int(i/2)+1))
+                    self.row.append(water_name)
+                    self.row.append(0)
+                
+                self.rows.append(self.row)
+
+        ### write the Trials_info.csv file ###
+        with open("C:/Users/irlab/gh-repos/Lumar_GUI/Lumar_GUI/Trials_info.csv", "w", encoding='UTF8', newline='') as self.f:
+            writer = csv.writer(self.f, dialect='excel', delimiter=',')
+            writer.writerow(self.header)
+            for i in self.rows:
+                writer.writerow(i)
+
 
         ### Create the header ###
         self.header = ["Exp_id", "Conditions", "Condition 1", "Condition 2",
@@ -319,7 +452,7 @@ class App(Tk):
                 f"{self.widgetsName[((i*self.NumColCondFrame)-1)]}"].get("1.0", "end-1c")
             self.row.append(remark)
 
-        with open("C:/Users/irlab/Desktop/Lumar_GUI/Exp_infos.csv", "w", encoding='UTF8', newline='') as self.f:
+        with open("C:/Users/irlab/gh-repos/Lumar_GUI/Lumar_GUI/Exp_info.csv", "w", encoding='UTF8', newline='') as self.f:
             writer = csv.writer(self.f, dialect='excel', delimiter=',')
             writer.writerow(self.header)
             writer.writerow(self.row)
@@ -529,10 +662,10 @@ class App(Tk):
                                AutocompleteCombobox(self.frames[self.count], width=12,
                                                     values=self.promotor, textvariable=self.FirstPromotor),
                                Label(self.frames[self.count],
-                                     text="replaced:"),
+                                     text="Driver:"),
                                AutocompleteCombobox(self.frames[self.count], width=12,
                                                     values=self.replaced, textvariable=self.FirstReplaced),
-                               Label(self.frames[self.count], text="KO/KI:"),
+                               Label(self.frames[self.count], text="Transgene:"),
                                AutocompleteCombobox(self.frames[self.count], width=12,
                                                     values=self.KIKO, textvariable=self.FirstKIKO),
                                Label(self.frames[self.count],
@@ -562,10 +695,10 @@ class App(Tk):
                                AutocompleteCombobox(self.frames[self.count], width=12,
                                                     values=self.promotor),
                                Label(self.frames[self.count],
-                                     text="replaced:"),
+                                     text="Driver:"),
                                AutocompleteCombobox(self.frames[self.count], width=12, state="readonly",
                                                     values=self.replaced),
-                               Label(self.frames[self.count], text="KO/KI:"),
+                               Label(self.frames[self.count], text="Transgene:"),
                                AutocompleteCombobox(self.frames[self.count], width=12,
                                                     values=self.KIKO),
                                Label(self.frames[self.count],
