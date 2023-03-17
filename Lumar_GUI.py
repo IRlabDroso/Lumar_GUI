@@ -246,14 +246,14 @@ class App(Tk):
                         transgene_name += "_"
                 else:
                     ### special get for textinput ###
-                    toappend = globals()[f"{self.widgetsName[(((i-1)*self.NumColCondFrame)+col)]}"].get("1.0", "end-1c")
-                    self.row.append(str(toappend))
+                    remarks = globals()[f"{self.widgetsName[(((i-1)*self.NumColCondFrame)+col)]}"].get("1.0", "end-1c")
                     continue
-                ### Others ###
 
                 toappend = globals()[f"{self.widgetsName[(((i-1)*self.NumColCondFrame)+col)]}"].get()
                 self.row.append(str(toappend))
+
             self.row.append(str(transgene_name))
+            self.row.append(str(remarks))
             self.rows.append(self.row)
 
         ### write the Trials_info.csv file ###
@@ -275,6 +275,7 @@ class App(Tk):
         diff_odors = []
         id_repeat = dict()
         self.rows = []
+        list_vials = []
 
         ### if no water in between odors ###
         if(self.OdorantIB.get() == "None"):
@@ -308,7 +309,13 @@ class App(Tk):
                     odor = odor + "_" + str(id_repeat[odor])
                     
                     self.row.append(odor)
-                    self.row.append(dilution)  
+                    self.row.append(dilution)
+
+                ### List_vials for the template ###
+                vial_number = int(globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+5)]}"].get())
+                list_vials.append(vial_number)
+
+                ### append the complete line ### 
                 self.rows.append(self.row)
 
         ### if water in between odors ###
@@ -341,11 +348,18 @@ class App(Tk):
                     
                     self.row.append(odor)
                     self.row.append(dilution)
+
+                    ### List_vials for the template ###
+                    vial_number = int(globals()[f"{self.widgetsNameOD[int(((id-1)*self.NumColODFrame)+5)]}"].get())
+                    list_vials.append(vial_number)      
                 else:
                     water_name = "Water "+ str((int(i/2)+1))
                     self.row.append(water_name)
                     self.row.append(0)
+
                 
+
+                ### append the complete line ###
                 self.rows.append(self.row)
 
         ### write the Trials_info.csv file ###
@@ -355,10 +369,10 @@ class App(Tk):
             for i in self.rows:
                 writer.writerow(i)
 
-
+        ### Exp_info.csv creation ###
         ### Create the header ###
         self.header = ["Exp_id", "Conditions", "Condition 1", "Condition 2",
-                       "Condition 3", "Condition4", "Antennas", "Odorant Trials"]
+                       "Condition 3", "Condition4", "Antennas", "Odorant Trials","Remarks"]
 
         if(self.OdorantIB.get() == "None"):
             for i in range(int(self.OdorantNum.get())+1):
@@ -401,62 +415,21 @@ class App(Tk):
         ### Odorants ###
         self.row.append(self.OdorantNum.get())
 
-        ### EachTrial ###
-        IBOD_name = ["%s %d" % (self.OdorantIB.get(), id)
-                     for id in range(1, (int(self.OdorantNum.get())+1))]
-        list_vials = []
-        id_repeat = dict()
-
-        if(self.OdorantIB.get() == "None"):
-            # if we don't have in between selected we put first odor as water then nothing
-            self.row.append("Water 1")
-            for i in range(1, (int(self.OdorantNum.get())+1)):
-                text = str(globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+1)]}"].get()) + "_e" + \
-                    str(globals()[
-                        f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+3)]}"].get())
-                if text in self.row:
-                    if text not in id_repeat.keys():
-                        id_repeat[text] = 2
-                    else:
-                        id_repeat[text] = id_repeat[text]+1
-
-                    text = text + "_" + str(id_repeat[text])
-                self.row.append(text)
-                vial_number = int(
-                    globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+5)]}"].get())
-                list_vials.append(vial_number)
-        else:
-            # if we do have an ib between odorant just intercal it between testing odors
-            for i in range(1, (int(self.OdorantNum.get())+1)):
-                self.row.append(IBOD_name[(i-1)])
-                text = globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+1)]}"].get() + "_e" + \
-                    str(globals()[
-                        f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+3)]}"].get())
-
-                if text in self.row:
-                    if text not in id_repeat.keys():
-                        id_repeat[text] = 2
-                    else:
-                        id_repeat[text] = id_repeat[text]+1
-
-                    text = text + "_" + str(id_repeat[text])
-                self.row.append(textASDAS) 
-                vial_number = int(
-                    globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+5)]}"].get())
-                list_vials.append(vial_number)
-                list_vials.append(1)
-
         ### Remarks ###
+        remark = ""
         for i in range(1, (int(self.CondNum.get())+1)):
-            remark = globals()[
+            remark += "cond_"+str(i)+"_"
+            remark += globals()[
                 f"{self.widgetsName[((i*self.NumColCondFrame)-1)]}"].get("1.0", "end-1c")
-            self.row.append(remark)
+            remark += "/"
+        self.row.append(remark)
 
         with open("C:/Users/irlab/gh-repos/Lumar_GUI/Lumar_GUI/Exp_info.csv", "w", encoding='UTF8', newline='') as self.f:
             writer = csv.writer(self.f, dialect='excel', delimiter=',')
             writer.writerow(self.header)
             writer.writerow(self.row)
 
+        ### Vial numbers for creating the template ###
         self.createTemplate(list_vials)
 
         self.close(self.master)
