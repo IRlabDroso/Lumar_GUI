@@ -440,7 +440,7 @@ class App(Tk):
                         id_repeat[text] = id_repeat[text]+1
 
                     text = text + "_" + str(id_repeat[text])
-                self.row.append(text)
+                self.row.append(textASDAS) 
                 vial_number = int(
                     globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+5)]}"].get())
                 list_vials.append(vial_number)

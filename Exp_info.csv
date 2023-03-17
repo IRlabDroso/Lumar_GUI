@@ -1,2 +1,2 @@
-Exp_id,Conditions,Condition1,Conditions2,Condition3,Condition4,Antennas,Odorants,Trial1,Trial2,Trial3
-5_03032023,2,test2__,dffhdfh__,NA,NA,3,3,water,,water,,water,
+Exp_id,Conditions,Condition 1,Condition 2,Condition 3,Condition4,Antennas,Odorant Trials,Trial 1,Trial 2,Trial 3,Trial 4,Trial 5,Trial 6,Trial 7,Trial 8,Remarks Cond 1,Remarks Cond 2,Remarks Cond 3
+1_03172023,3,DmOR1_OR22ab_Boosted Gal4_Knockin_GCaMP7f_F_M_3,DmOR1_OR42b_Gal4_Knockin_GCaMP7f_F_M_3,DmOR1_OR42b_Gal4_Knockin_GCaMP7f_F_M_3,NA,6,4,water 1,"(4R,5R)-5-(1,2-dihydroxyethyl)-3,4-dihydroxy-2-oxolanone_e3",water 2,"(4R,5R)-5-(1,2-dihydroxyethyl)-3,4-dihydroxy-2-oxolanone_e3_2",water 3,"(4R,5R)-5-(1,2-dihydroxyethyl)-3,4-dihydroxy-2-oxolanone_e3_3",water 4,"(4R,5R)-5-(1,2-dihydroxyethyl)-3,4-dihydroxy-2-oxolanone_e3_4",,,
