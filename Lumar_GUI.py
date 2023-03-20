@@ -70,13 +70,21 @@ class App(Tk):
         self.master = master
 
         ### Variables for controlled parameters ###
+
+
+        
+
+
+
+
+
         self.userDict = {"Nicolas": 1, "Yann": 2,
-                         "Ilham": 3, "Ivan": 4, "Dan": 5}
+                         "Ilham": 3, "Ivan": 4, "Dan": 5,"Axel": 6}
         self.Driver = ["OR42b", "OR47b", "OR59b", "OR22ab", "ORCO"]
         self.promotor = ["OR42b", "OR47b", "OR59b", "OR22ab", "ORCO"]
         self.replaced = ["Gal4","Boosted Gal4"]
         self.KIKO = ["Knockin", "Transgene", "other"]
-        self.OR = ["Endogenous"] + ["DmOR%d" % id for id in range(1, 30)]
+        self.OR = ["Endogenous","Empty"] + ["DmOR%d" % id for id in range(1, 30)]
         self.reporter = ["GCaMP7f"]
         self.T2A = ["F", "TB", "TA"]
         self.sex = ["M", "F"]
@@ -424,7 +432,7 @@ class App(Tk):
             remark += "/"
         self.row.append(remark)
 
-        with open("C:/Users/irlab/gh-repos/Lumar_GUI/Lumar_GUI/Exp_info.csv", "w", encoding='UTF8', newline='') as self.f:
+        with open("C:/Users/irlab/gh-repos/Lumar_GUI/Lumar_GUI/Exp_Infos.csv", "w", encoding='UTF8', newline='') as self.f:
             writer = csv.writer(self.f, dialect='excel', delimiter=',')
             writer.writerow(self.header)
             writer.writerow(self.row)
@@ -482,27 +490,60 @@ class App(Tk):
             messagebox.showerror(
                 "showerror", "Enter a correct name that follow the rules!")
             Newmaster.lift()
-
-    def createNewDriver(self, Newmaster):
-        # Function that is trigerred when we create a new OR and we add it to the combobox
-
-        # avoid to create a duplicated name
-        if self.newOR.get() in list(globals()[f"{self.widgetsName[4]}"]["values"]):
+    
+    def createNewElement(self, Newmaster,category):
+        # Define initial values depending on which variable we change
+        if category == "OR":
+            widget_id = 2
+            research = "\d{1,9}_2"
+            correct = False
+        elif category == "Driver":
+            widget_id = 6
+            research = "\d{1,9}_6"
+            correct = True
+        elif category == "Promoter": 
+            widget_id = 4 
+            research = "\d{1,9}_4"
+            correct = True
+        elif category == "Transgene": 
+            widget_id = 8
+            research = "\d{1,9}_8"
+            correct = True
+        elif category == "Reporter": 
+            widget_id = 10
+            research = "\d{1,9}_10"
+            correct = True
+        
+        value = self.newVar.get()
+        
+        # Test is this entry not already exist 
+        if value in list(globals()[f"{self.widgetsName[widget_id]}"]["values"]):
             messagebox.showerror(
                 "showerror", "Enter a name that does not already exist!")
             Newmaster.lift()
+        
         # Test if the format correspond
+        if category=="OR" :
+            if bool(re.search("\w\wOR\d", str(value))) & str(value)[0].isupper() & str(value)[2:3].isupper():
+                correct = True
 
-        for i in self.widgetsName:
-            if re.search("\d{1,9}_4", i):
-                # take the existing list of OR and add the new one
-                newlist = list(globals()[f"{i}"]["values"])
-                newlist.append(self.newDriver.get())
-                globals()[f"{i}"]["values"] = newlist
-                # set the current selection to the new OR created
-                globals()[f"{i}"].current((len(globals()[f"{i}"]["values"])-1))
+        if correct:
+            for i in self.widgetsName:
+                if re.search(research, i):
+                    # take the existing list of OR and add the new one
+                    newlist = list(globals()[f"{i}"]["values"])
+                    newlist.append(value)
+                    globals()[f"{i}"]["values"] = newlist
+                    # set the current selection to the new OR created
+                    globals()[f"{i}"].current((len(globals()[f"{i}"]["values"])-1))
 
-        Newmaster.destroy()  # quit the new window
+            Newmaster.destroy()  # quit the new window
+        else:
+            messagebox.showerror(
+                "showerror", "Enter a correct name that follow the rules!")
+            Newmaster.lift()
+
+    
 
     def selected_cond_num(self, event):
         # Function that detects when number of conditions changes and adapt things
@@ -530,53 +571,57 @@ class App(Tk):
 
     def createNewVar(self):
         self.newORButton = Button(
-            self.ScrollFrame, text="Create a new OR", command=self.addnewVar)
-        self.newORButton.grid(column=2, row=3, padx=(112, 30))
-        self.newORButton = Button(
-            self.ScrollFrame, text="Create a new Driver", command=self.addnewVarDriver)
-        self.newORButton.grid(column=3, row=3, padx=0)
+            self.ScrollFrame, text="Create a new OR", command=lambda: self.addnewVar("OR"))
+        self.newORButton.grid(column=2, row=3, padx=(151, 5))
+        self.newPromotorButton = Button(
+            self.ScrollFrame, text="Create a new Promoter", command=lambda: self.addnewVar("Promoter"))
+        self.newPromotorButton.grid(column=3, row=3, padx=(0,5))
+        self.newDriverButton = Button(
+            self.ScrollFrame, text="Create a new Driver", command=lambda: self.addnewVar("Driver"))
+        self.newDriverButton.grid(column=4, row=3, padx=(0,5))
+        self.newTransgeneButton = Button(
+            self.ScrollFrame, text="Create a new Transgene", command=lambda: self.addnewVar("Transgene"))
+        self.newTransgeneButton.grid(column=5, row=3, padx=(0,5))
+        self.newReporterButton = Button(
+            self.ScrollFrame, text="Create a new Reporter", command=lambda: self.addnewVar("Reporter"))
+        self.newReporterButton.grid(column=6, row=3, padx=(0,5))    
+    def addnewVar(self,category):
+        # Define initial values depending on which variable we change
+        if category == "OR":
+            message = """In order to create a new OR you must use the followings rules:\n\n   - The format of the OR should be the species then OR and finally the number(DmOR12)\n\n   - The species name should be the latin initials corresponding to the Genus (capital letter) and the species => (Dm for drosophila melanogaster)\n\n   - None of special character should be used (- ,_ ,/ ,etc...)
+        """ 
+        elif category == "Driver":
+            message = """In order to create a new Driver you must use the followings rules:\n\n ???
+        """
+        elif category == "Promoter":
+            message = """In order to create a new Promoter you must use the followings rules:\n\n ???
+        """
+        elif category == "Transgene":
+            message = """In order to create a new Transgene you must use the followings rules:\n\n ???
+        """
+        elif category == "Reporter":
+            message = """In order to create a new Reporter you must use the followings rules:\n\n ???
+        """
 
-    def addnewVar(self):
         self.newWindow = Toplevel(self.master)
         self.newWindow.geometry("800x500")
-        self.newWindow.title("Create a new OR")
-        self.textBoxOr = Text(self.newWindow, height=20,
+        title = "Create a new " + category
+        self.newWindow.title(title)
+        self.textBox = Text(self.newWindow, height=20,
                               width=70, font=('Arial', 11, 'bold'))
-        message = """In order to create a new OR you must use the followings rules:\n\n   - The format of the OR should be the species then OR and finally the number(DmOR12)\n\n   - The species name should be the latin initials corresponding to the Genus (capital letter) and the species => (Dm for drosophila melanogaster)\n\n   - None of special character should be used (- ,_ ,/ ,etc...)
-        """
-        self.textBoxOr.grid(row=0, column=0, columnspan=3, padx=50, pady=10)
-        self.textBoxOr.insert('end', message)
-        self.textBoxOr.config(state="disabled")
+    
+        self.textBox.grid(row=0, column=0, columnspan=3, padx=50, pady=10)
+        self.textBox.insert('end', message)
+        self.textBox.config(state="disabled")
 
-        Label(self.newWindow, text="Enter the new OR:").grid(row=1, column=0)
-        self.newOR = StringVar()
-        self.newOREntry = Entry(self.newWindow, textvariable=self.newOR)
-        self.newOREntry.grid(row=1, column=1)
-        Button(self.newWindow, text="Create new OR", command=lambda: self.createNewOr(
-            self.newWindow)).grid(row=2, column=1)
-
-    def addnewVarDriver(self):
-        self.newWindowDriver = Toplevel(self.master)
-        self.newWindowDriver.geometry("800x500")
-        self.newWindowDriver.title("Create a new Driver")
-
-        self.textBoxDriver = Text(
-            self.newWindowDriver, height=20, width=70, font=('Arial', 11, 'bold'))
-        message = """In order to create a new Driver you must use the followings rules:\n\n ???
-        """
-        self.textBoxDriver.grid(
-            row=0, column=0, columnspan=3, padx=50, pady=10)
-        self.textBoxDriver.insert('end', message)
-        self.textBoxDriver.config(state="disabled")
-
-        Label(self.newWindowDriver, text="Enter the new Driver:").grid(
-            row=1, column=0)
-        self.newDriver = StringVar()
-        self.newDriverEntry = Entry(
-            self.newWindowDriver, textvariable=self.newDriver)
-        self.newDriverEntry.grid(row=1, column=1)
-        Button(self.newWindowDriver, text="Create new OR", command=lambda: self.createNewDriver(
-            self.newWindowDriver)).grid(row=2, column=1)
+        text = "Enter the new " + category + ":"
+        Label(self.newWindow, text=text).grid(row=1, column=0)
+        self.newVar = StringVar()
+        self.newVarEntry = Entry(self.newWindow, textvariable=self.newVar)
+        self.newVarEntry.grid(row=1, column=1)
+        text = "Create new " + category
+        Button(self.newWindow, text=text, command=lambda: self.createNewElement(
+            self.newWindow,category=category)).grid(row=2, column=1)
 
     def callback(self, event):
         # Function to autoFill the conditions comboboxs
