@@ -76,7 +76,7 @@ class App(Tk):
         self.promotor = ["OR42b", "OR47b", "OR59b", "OR22ab", "ORCO"]
         self.replaced = ["Gal4","Boosted Gal4"]
         self.KIKO = ["Knockin", "Transgene", "other"]
-        self.OR = ["DmOR%d" % id for id in range(1, 30)]
+        self.OR = ["Endogenous"] + ["DmOR%d" % id for id in range(1, 30)]
         self.reporter = ["GCaMP7f"]
         self.T2A = ["F", "TB", "TA"]
         self.sex = ["M", "F"]
