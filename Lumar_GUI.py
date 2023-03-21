@@ -73,31 +73,11 @@ class App(Tk):
         ### Variables for controlled parameters ###
         
         df = pd.read_csv("Data.csv")
-        
         self.OR = list(df.OR[df.OR.notna()].values)
         self.promotor = list(df.Promoter[df.Promoter.notna()].values)
         self.KIKO = list(df.Driver[df.Driver.notna()].values)
         self.replaced = list(df.Transgene[df.Transgene.notna()].values)
         self.reporter = list(df.Reporter[df.Reporter.notna()].values)
-
-        # for row in csv_reader:
-        #     for i in range(len(row)):
-        #         if (i == 0) & (row[i] !=pd.NA): #ORs
-        #             self.OR.append(row[i])
-        #         elif (i == 1) & (row[i] != pd.NA): #Promoter
-        #              self.promotor.append(row[i])
-        #         elif (i == 2) & (row[i] != pd.NA): #Driver
-        #              self.replaced.append(row[i])
-        #         elif (i == 3) & (row[i] != pd.NA): #Transgene
-        #              self.KIKO.append(row[i])
-        #         elif (i == 4) & (row[i] != pd.NA): #Reporter
-        #              self.reporter.append(row[i])
-
-        
-
-
-
-
 
         self.userDict = {"Nicolas": 1, "Yann": 2,
                          "Ilham": 3, "Ivan": 4, "Dan": 5,"Axel": 6}
@@ -395,17 +375,18 @@ class App(Tk):
         ### Exp_info.csv creation ###
         ### Create the header ###
         self.header = ["Exp_id", "Conditions", "Condition 1", "Condition 2",
-                       "Condition 3", "Condition4", "Antennas", "Odorant Trials","Remarks"]
+                       "Condition 3", "Condition4", "Antennas", "Odorant Trials"]
 
         if(self.OdorantIB.get() == "None"):
             for i in range(int(self.OdorantNum.get())+1):
                 self.header.append(("Trial "+str((i+1))))
         else:
-            for i in range(int(self.OdorantNum.get())*2):
+            for i in range((int(self.OdorantNum.get())*2)+1):
                 self.header.append(("Trial "+str((i+1))))
 
-        for i in range(int(self.CondNum.get())):
-            self.header.append("Remarks Cond "+str(i+1))
+        # for i in range(int(self.CondNum.get())):
+        #     self.header.append("Remarks Cond "+str(i+1))
+        self.header.append("Remarks")
 
         ### Create the data ###
         self.row = []
@@ -436,7 +417,54 @@ class App(Tk):
         self.row.append(self.AnttenasPerC.get())
 
         ### Odorants ###
-        self.row.append(self.OdorantNum.get())
+        if self.OdorantIB.get() == "None":
+            self.row.append(int(self.OdorantNum.get()+1))
+        else:
+            self.row.append((int(self.OdorantNum.get())*2+1))
+
+        ### Trials ###
+        IBOD_name = ["%s %d" % (self.OdorantIB.get(), id)
+                     for id in range(1, (int(self.OdorantNum.get())+2))]
+        list_vials = []
+        id_repeat = dict()
+        if(self.OdorantIB.get() == "None"):
+            # if we don't have in between selected we put first odor as water then nothing
+            self.row.append("Water 1")
+            for i in range(1, (int(self.OdorantNum.get())+1)):
+                text = str(globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+1)]}"].get()) + "_e" + \
+                    str(globals()[
+                        f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+3)]}"].get())
+                if text in self.row:
+                    if text not in id_repeat.keys():
+                        id_repeat[text] = 2
+                    else:
+                        id_repeat[text] = id_repeat[text]+1
+                    text = text + "_" + str(id_repeat[text])
+                self.row.append(text)
+                vial_number = int(
+                    globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+5)]}"].get())
+                list_vials.append(vial_number)
+        else:
+            # if we do have an ib between odorant just intercal it between testing odors
+            for i in range(1, (int(self.OdorantNum.get())+1)):
+                self.row.append(IBOD_name[(i-1)])
+                text = globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+1)]}"].get() + "_e" + \
+                    str(globals()[
+                        f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+3)]}"].get())
+                if text in self.row:
+                    if text not in id_repeat.keys():
+                        id_repeat[text] = 2
+                    else:
+                        id_repeat[text] = id_repeat[text]+1
+                    text = text + "_" + str(id_repeat[text])
+                self.row.append(text)
+                vial_number = int(
+                    globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+5)]}"].get())
+                list_vials.append(vial_number)
+                list_vials.append(1)
+
+        last_water = IBOD_name[(len(IBOD_name)-1)]
+        self.row.append(last_water)
 
         ### Remarks ###
         remark = ""
