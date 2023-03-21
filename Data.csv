@@ -1,8 +1,10 @@
+OR,Promoter,Driver,Transgene,Reporter
 Endogenous,OR42b,Gal4,Knockin,GCaMP7f
-DmOR1,OR47b,Boosted Gal4,Transgene,
-DmOR2,OR59b,,other,
-DmOR3,OR22ab,,,
-DmOR4,ORCO,,,
+Empty,OR47b,Boosted Gal4,Transgene,
+DmOR1,OR59b,,other,
+DmOR2,OR22ab,,,
+DmOR3,ORCO,,,
+DmOR4,Empty,,,
 DmOR5,,,,
 DmOR6,,,,
 DmOR7,,,,

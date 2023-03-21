@@ -3,6 +3,7 @@ from tkinter import messagebox
 from tkinter.ttk import *
 from tkcalendar import *
 from ttkwidgets.autocomplete import *
+import pandas as pd
 import re
 import csv
 
@@ -70,7 +71,27 @@ class App(Tk):
         self.master = master
 
         ### Variables for controlled parameters ###
+        
+        df = pd.read_csv("Data.csv")
+        
+        self.OR = list(df.OR[df.OR.notna()].values)
+        self.promotor = list(df.Promoter[df.Promoter.notna()].values)
+        self.KIKO = list(df.Driver[df.Driver.notna()].values)
+        self.replaced = list(df.Transgene[df.Transgene.notna()].values)
+        self.reporter = list(df.Reporter[df.Reporter.notna()].values)
 
+        # for row in csv_reader:
+        #     for i in range(len(row)):
+        #         if (i == 0) & (row[i] !=pd.NA): #ORs
+        #             self.OR.append(row[i])
+        #         elif (i == 1) & (row[i] != pd.NA): #Promoter
+        #              self.promotor.append(row[i])
+        #         elif (i == 2) & (row[i] != pd.NA): #Driver
+        #              self.replaced.append(row[i])
+        #         elif (i == 3) & (row[i] != pd.NA): #Transgene
+        #              self.KIKO.append(row[i])
+        #         elif (i == 4) & (row[i] != pd.NA): #Reporter
+        #              self.reporter.append(row[i])
 
         
 
@@ -80,12 +101,6 @@ class App(Tk):
 
         self.userDict = {"Nicolas": 1, "Yann": 2,
                          "Ilham": 3, "Ivan": 4, "Dan": 5,"Axel": 6}
-        self.Driver = ["OR42b", "OR47b", "OR59b", "OR22ab", "ORCO"]
-        self.promotor = ["OR42b", "OR47b", "OR59b", "OR22ab", "ORCO"]
-        self.replaced = ["Gal4","Boosted Gal4"]
-        self.KIKO = ["Knockin", "Transgene", "other"]
-        self.OR = ["Endogenous","Empty"] + ["DmOR%d" % id for id in range(1, 30)]
-        self.reporter = ["GCaMP7f"]
         self.T2A = ["F", "TB", "TA"]
         self.sex = ["M", "F"]
         self.Age = list(range(1, 10))
@@ -536,6 +551,22 @@ class App(Tk):
                     globals()[f"{i}"]["values"] = newlist
                     # set the current selection to the new OR created
                     globals()[f"{i}"].current((len(globals()[f"{i}"]["values"])-1))
+            
+            df = pd.read_csv("Data.csv")
+            NAs = list(df.loc[pd.isna(df[category]),:].index)
+            if len(NAs) == 0:
+                print(df.columns.get_loc(category))
+                col_index = df.columns.get_loc(category)
+                to_append_df = [pd.NA]*len(df.columns)
+                to_append_df[col_index] = value
+                print(to_append_df)
+                df = df.append(pd.Series(to_append_df, index=df.columns), ignore_index=True)
+                print(df.head)
+            else:
+                index = NAs[0]
+                df.loc[index,category] = value
+            
+            df.to_csv("Data.csv",index=False)
 
             Newmaster.destroy()  # quit the new window
         else:
