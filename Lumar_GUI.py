@@ -4,6 +4,7 @@ from tkinter.ttk import *
 from tkcalendar import *
 from ttkwidgets.autocomplete import *
 import pandas as pd
+import pubchempy as pcp
 import re
 import csv
 
@@ -72,6 +73,8 @@ class App(Tk):
 
         ### Variables for controlled parameters ###
         
+
+
         df = pd.read_csv("Data.csv")
         self.OR = list(df.OR[df.OR.notna()].values)
         self.promotor = list(df.Promoter[df.Promoter.notna()].values)
@@ -85,7 +88,7 @@ class App(Tk):
         self.sex = ["M", "F"]
         self.Age = list(range(1, 10))
         #self.odorList = ["odor1", "odor2", "odor3"]
-        odors = self.load_csv("C:/Users/irlab/gh-repos/Lumar_GUI/Lumar_GUI/Corrected_odors.csv")
+        odors = self.load_csv("Corrected_odors.csv")
         self.odorList = list(odors.values())
 
         ### params for each conditions create ###
@@ -504,35 +507,6 @@ class App(Tk):
 
     def close(self, Newmaster):
         Newmaster.quit()
-
-    def createNewOr(self, Newmaster):
-        # Function that is trigerred when we create a new OR and we add it to the combobox
-
-        # avoid to create a duplicated name
-        if self.newOR.get() in list(globals()[f"{self.widgetsName[2]}"]["values"]):
-            messagebox.showerror(
-                "showerror", "Enter a name that does not already exist!")
-            Newmaster.lift()
-
-        # Test if the format correspond
-        elif bool(re.search("\w\wOR\d", str(self.newOR.get()))) & str(self.newOR.get())[0].isupper() & str(self.newOR.get())[2:3].isupper():
-            for i in self.widgetsName:
-
-                if re.search("\d{1,9}_2", i):
-                    # take the existing list of OR and add the new one
-                    newlist = list(globals()[f"{i}"]["values"])
-                    newlist.append(self.newOR.get())
-                    globals()[f"{i}"]["values"] = newlist
-                    # set the current selection to the new OR created
-                    globals()[f"{i}"].current(
-                        (len(globals()[f"{i}"]["values"])-1))
-                    globals()[f"{i}"].set_completion_list(newlist)
-
-            Newmaster.destroy()  # quit the new window
-        else:
-            messagebox.showerror(
-                "showerror", "Enter a correct name that follow the rules!")
-            Newmaster.lift()
     
     def createNewElement(self, Newmaster,category):
         # Define initial values depending on which variable we change
@@ -567,7 +541,7 @@ class App(Tk):
         
         # Test if the format correspond
         if category=="OR" :
-            if bool(re.search("\w\wOR\d", str(value))) & str(value)[0].isupper() & str(value)[2:3].isupper():
+            if bool(re.search("[A-Z]{1}[a-z]+OR\d", str(value))):
                 correct = True
 
         if correct:
@@ -602,7 +576,41 @@ class App(Tk):
                 "showerror", "Enter a correct name that follow the rules!")
             Newmaster.lift()
 
-    
+    def createNewElementOdor(self,Newmaster):
+        value = self.newOdor.get()
+
+        CID = pcp.get_cids(str(value), 'name',
+                               'substance', list_return='flat')
+        
+        if len(CID) == 0:
+            message = "No molecules were found for:" + value + "!"
+            messagebox.showerror(
+                "showerror", message)
+            Newmaster.lift()
+        else:
+            message = "Is " + CID[0] + " the molecule you wanted to add?"
+            answer = messagebox.askyesno(message=message)
+            if answer == True:
+                with open("Odorants.csv","a") as f:
+                    writer_object = csv.writer(f,sep=";")
+                    row = [CID[0],"",""]
+                    writer_object.writerow(row)
+                    f.close()
+            else:
+                for mol_id in CID[1:len(CID)]:
+                    message = "Is " + CID[mol_id] + " the molecule you wanted to add?"
+                    answer = messagebox.askyesno(message=message)
+                    if answer == True:
+                        with open("Odorants.csv","a") as f:
+                            writer_object = csv.writer(f,sep=";")
+                            row = [CID[mol_id],"",""]
+                            writer_object.writerow(row)
+                            f.close()
+
+            
+        print(CID)
+
+        
 
     def selected_cond_num(self, event):
         # Function that detects when number of conditions changes and adapt things
@@ -624,9 +632,18 @@ class App(Tk):
         for i in self.framesOD:
             i.grid_forget()
 
+        ### Add create new variables buttons ###
+        self.createNewOdor()
+
         ### Show odors frames with the functions below ###
         self.drawOdorants()
         self.change_position()
+
+    def createNewOdor(self):
+        self.newORButton = Button(
+            self.ScrollFrame, text="Create a new odor", command=lambda: self.addnewOdor())
+        print(self.count)
+        self.newORButton.grid(column=2, row=int(self.count+5), padx=(0, 5))
 
     def createNewVar(self):
         self.newORButton = Button(
@@ -644,6 +661,22 @@ class App(Tk):
         self.newReporterButton = Button(
             self.ScrollFrame, text="Create a new Reporter", command=lambda: self.addnewVar("Reporter"))
         self.newReporterButton.grid(column=6, row=3, padx=(0,5))    
+    
+    def addnewOdor(self):
+        self.newWindow = Toplevel(self.master)
+        self.newWindow.geometry("300x200")
+        title = "Create a new odor" 
+        self.newWindow.title(title)
+
+        text = "Enter the new odor:"
+        Label(self.newWindow, text=text).grid(row=1, column=0)
+        self.newOdor = StringVar()
+        self.newOdorEntry = Entry(self.newWindow, textvariable=self.newOdor)
+        self.newOdorEntry.grid(row=1, column=1,pady=20)
+        text = "Create new odor"
+        Button(self.newWindow, text=text, command=lambda: self.createNewElementOdor(
+            self.newWindow)).grid(row=2, column=1)
+        
     def addnewVar(self,category):
         # Define initial values depending on which variable we change
         if category == "OR":
@@ -706,8 +739,8 @@ class App(Tk):
 
         self.OdorantsLabel.grid(column=0, row=(self.count + 5))
         self.OdorantEntry.grid(column=1, row=(self.count + 5))
-        self.OdorantsIBLabel.grid(column=2, row=(self.count + 5))
-        self.OdorantIBEntry.grid(column=3, row=(self.count + 5))
+        self.OdorantsIBLabel.grid(column=3, row=(self.count + 5))
+        self.OdorantIBEntry.grid(column=4, row=(self.count + 5))
 
     def drawConditions(self):
         # Function to create the conditions frames which all informations for each
@@ -807,11 +840,17 @@ class App(Tk):
                         globals()[f"{x}"].current(2)
                     elif (x == self.widgetsName[2]) | (x == self.widgetsName[4]) | (x == self.widgetsName[6]) | (x == self.widgetsName[8]):
                         # If first condition we add this function to autofill
+                        print(str(globals()[f"{x}"]))
                         globals()[f"{x}"].set_completion_list(
                             (globals()[f"{x}"]["values"]))
                         globals()[f"{x}"].focus_set()
                         globals()[f"{x}"].bind(
                             "<<ComboboxSelected>>", self.callback)
+                        globals()[f"{x}"].current(0)
+                    elif re.search("autocomplete",str(globals()[f"{x}"])):
+                        globals()[f"{x}"].set_completion_list(
+                            (globals()[f"{x}"]["values"]))
+                        globals()[f"{x}"].focus_set()
                         globals()[f"{x}"].current(0)
                     else:
                         globals()[f"{x}"].current(0)
@@ -873,7 +912,7 @@ class App(Tk):
                 Frame(self.ScrollFrame, borderwidth=1, relief="solid", height=300))
 
             self.framesOD[self.countOD].grid(
-                row=(self.count+6+i), column=1, columnspan=3, pady=10)
+                row=(self.count+7+i), column=1, columnspan=3, pady=10)
 
             widgetsListOD = [Label(self.framesOD[self.countOD], text=str("Trial: " + str(i+1) + ":")),
                              AutocompleteCombobox(self.framesOD[self.countOD], width=30, state="normal", values=self.odorList),
