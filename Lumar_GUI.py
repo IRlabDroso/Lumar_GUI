@@ -3,6 +3,9 @@ from tkinter import messagebox
 from tkinter.ttk import *
 from tkcalendar import *
 from ttkwidgets.autocomplete import *
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+import chromedriver_autoinstaller
 import pandas as pd
 import pubchempy as pcp
 import re
@@ -72,8 +75,6 @@ class App(Tk):
         self.master = master
 
         ### Variables for controlled parameters ###
-        
-
 
         df = pd.read_csv("Data.csv")
         self.OR = list(df.OR[df.OR.notna()].values)
@@ -83,7 +84,7 @@ class App(Tk):
         self.reporter = list(df.Reporter[df.Reporter.notna()].values)
 
         self.userDict = {"Nicolas": 1, "Yann": 2,
-                         "Ilham": 3, "Ivan": 4, "Dan": 5,"Axel": 6}
+                         "Ilham": 3, "Ivan": 4, "Dan": 5, "Axel": 6}
         self.T2A = ["F", "TB", "TA"]
         self.sex = ["M", "F"]
         self.Age = list(range(1, 10))
@@ -104,7 +105,7 @@ class App(Tk):
         master.title("Test_GUI")
         master.geometry("1500x1000")
         master.resizable(True, True)
-        #master.wm_iconbitmap("Fluo_fly.ico")
+        # master.wm_iconbitmap("Fluo_fly.ico")
 
         ### Frames ###
         # Create the main frame within the canva that got the scrollbars
@@ -211,18 +212,18 @@ class App(Tk):
         #         widget['font'] = ("Arial", 10)
 
     def create_CSV(self):
-        
+
         # check if all is filled correctly
         if(int(self.OdorantNum.get()) == 0 | int(self.CondNum.get()) == 0):
             messagebox.showerror(
                 "showerror", "Select at least one condition and one odorant !")
             return
-        
 
         ##### Creation Conditions_info.csv #####
         ### Create the header ###
-        self.header = ["Exp_id", "Condition_id", "OR","promotor","driver","transgene","reporter","T2A","sex", "age","Transgene_name", "remarks"]
-        
+        self.header = ["Exp_id", "Condition_id", "OR", "promotor", "driver",
+                       "transgene", "reporter", "T2A", "sex", "age", "Transgene_name", "remarks"]
+
         ### Create the data ###
         self.rows = []
         ### EXP_id ###
@@ -230,7 +231,7 @@ class App(Tk):
             str(self.date.get()).replace("/", "")
 
         ### EachCond ##
-        for i in range(1,(int(self.CondNum.get())+1)):
+        for i in range(1, (int(self.CondNum.get())+1)):
             self.row = []
 
             ### Exp_id ###
@@ -252,10 +253,12 @@ class App(Tk):
                         transgene_name += "_"
                 else:
                     ### special get for textinput ###
-                    remarks = globals()[f"{self.widgetsName[(((i-1)*self.NumColCondFrame)+col)]}"].get("1.0", "end-1c")
+                    remarks = globals()[
+                        f"{self.widgetsName[(((i-1)*self.NumColCondFrame)+col)]}"].get("1.0", "end-1c")
                     continue
 
-                toappend = globals()[f"{self.widgetsName[(((i-1)*self.NumColCondFrame)+col)]}"].get()
+                toappend = globals()[
+                    f"{self.widgetsName[(((i-1)*self.NumColCondFrame)+col)]}"].get()
                 self.row.append(str(toappend))
 
             self.row.append(str(transgene_name))
@@ -271,8 +274,8 @@ class App(Tk):
 
         ##### Creation Trials_info.csv #####
         ### Create the header ###
-        self.header = ["Exp_id", "Trial_id", "odor","dilution"]
-        
+        self.header = ["Exp_id", "Trial_id", "odor", "dilution"]
+
         ### create trials data ###
 
         ### EachTrial ###
@@ -286,24 +289,26 @@ class App(Tk):
         ### if no water in between odors ###
         if(self.OdorantIB.get() == "None"):
 
-            for i in range(1,(int(self.OdorantNum.get())+2)):
+            for i in range(1, (int(self.OdorantNum.get())+2)):
                 self.row = []
-                
+
                 ### exp_id ###
                 self.row.append(exp_id)
 
                 ### trial_id ###
-                trial_id = "Trial_"+ exp_id +"_"+str(i)
+                trial_id = "Trial_" + exp_id + "_"+str(i)
                 self.row.append(trial_id)
-            
+
                 ### Odor + dilution ###
-                if(i==1):
+                if(i == 1):
                     # if we don't have in between selected we put first odor as water then nothing
                     self.row.append("Water 1")
                     self.row.append(0)
                 else:
-                    odor = str(globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+1)]}"].get())
-                    dilution = str(globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+3)]}"].get())
+                    odor = str(
+                        globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+1)]}"].get())
+                    dilution = str(
+                        globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+3)]}"].get())
                     if odor in diff_odors:
                         if odor not in id_repeat.keys():
                             id_repeat[odor] = 2
@@ -311,17 +316,18 @@ class App(Tk):
                             id_repeat[odor] = id_repeat[odor]+1
                     else:
                         diff_odors.append(odor)
-                    
+
                     odor = odor + "_" + str(id_repeat[odor])
-                    
+
                     self.row.append(odor)
                     self.row.append(dilution)
 
                 ### List_vials for the template ###
-                vial_number = int(globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+5)]}"].get())
+                vial_number = int(
+                    globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+5)]}"].get())
                 list_vials.append(vial_number)
 
-                ### append the complete line ### 
+                ### append the complete line ###
                 self.rows.append(self.row)
 
         ### if water in between odors ###
@@ -329,41 +335,42 @@ class App(Tk):
             # if we do have an ib between odorant just intercal it between testing odors
             for i in range(1, ((int(self.OdorantNum.get())+1)*2)):
                 self.row = []
-                
+
                 ### exp_id ###
                 self.row.append(exp_id)
 
                 ### trial_id ###
                 trial_id = "Trial_"+exp_id+"_"+str(i)
                 self.row.append(trial_id)
-            
+
                 ### Odor + dilution ###
-                if i%2 == 0:
+                if i % 2 == 0:
                     id = int(i/2)
-                    odor = str(globals()[f"{self.widgetsNameOD[int(((id-1)*self.NumColODFrame)+1)]}"].get())
-                    dilution = str(globals()[f"{self.widgetsNameOD[int(((id-1)*self.NumColODFrame)+3)]}"].get())
+                    odor = str(
+                        globals()[f"{self.widgetsNameOD[int(((id-1)*self.NumColODFrame)+1)]}"].get())
+                    dilution = str(
+                        globals()[f"{self.widgetsNameOD[int(((id-1)*self.NumColODFrame)+3)]}"].get())
                     if odor in diff_odors:
                         if odor not in id_repeat.keys():
                             id_repeat[odor] = 2
                         else:
                             id_repeat[odor] = id_repeat[odor]+1
-                        
+
                         odor = odor + "_" + str(id_repeat[odor])
                     else:
                         diff_odors.append(odor)
-                    
+
                     self.row.append(odor)
                     self.row.append(dilution)
 
                     ### List_vials for the template ###
-                    vial_number = int(globals()[f"{self.widgetsNameOD[int(((id-1)*self.NumColODFrame)+5)]}"].get())
-                    list_vials.append(vial_number)      
+                    vial_number = int(
+                        globals()[f"{self.widgetsNameOD[int(((id-1)*self.NumColODFrame)+5)]}"].get())
+                    list_vials.append(vial_number)
                 else:
-                    water_name = "Water "+ str((int(i/2)+1))
+                    water_name = "Water " + str((int(i/2)+1))
                     self.row.append(water_name)
                     self.row.append(0)
-
-                
 
                 ### append the complete line ###
                 self.rows.append(self.row)
@@ -507,8 +514,8 @@ class App(Tk):
 
     def close(self, Newmaster):
         Newmaster.quit()
-    
-    def createNewElement(self, Newmaster,category):
+
+    def createNewElement(self, Newmaster, category):
         # Define initial values depending on which variable we change
         if category == "OR":
             widget_id = 2
@@ -518,99 +525,130 @@ class App(Tk):
             widget_id = 6
             research = "\d{1,9}_6"
             correct = True
-        elif category == "Promoter": 
-            widget_id = 4 
+        elif category == "Promoter":
+            widget_id = 4
             research = "\d{1,9}_4"
             correct = True
-        elif category == "Transgene": 
+        elif category == "Transgene":
             widget_id = 8
             research = "\d{1,9}_8"
             correct = True
-        elif category == "Reporter": 
+        elif category == "Reporter":
             widget_id = 10
             research = "\d{1,9}_10"
             correct = True
-        
+
         value = self.newVar.get()
-        
-        # Test is this entry not already exist 
+
+        # Test is this entry not already exist
         if value in list(globals()[f"{self.widgetsName[widget_id]}"]["values"]):
             messagebox.showerror(
                 "showerror", "Enter a name that does not already exist!")
             Newmaster.lift()
-        
-        # Test if the format correspond
-        if category=="OR" :
-            if bool(re.search("[A-Z]{1}[a-z]+OR\d", str(value))):
-                correct = True
-
-        if correct:
-            for i in self.widgetsName:
-                if re.search(research, i):
-                    # take the existing list of OR and add the new one
-                    newlist = list(globals()[f"{i}"]["values"])
-                    newlist.append(value)
-                    globals()[f"{i}"]["values"] = newlist
-                    # set the current selection to the new OR created
-                    globals()[f"{i}"].current((len(globals()[f"{i}"]["values"])-1))
-            
-            df = pd.read_csv("Data.csv")
-            NAs = list(df.loc[pd.isna(df[category]),:].index)
-            if len(NAs) == 0:
-                print(df.columns.get_loc(category))
-                col_index = df.columns.get_loc(category)
-                to_append_df = [pd.NA]*len(df.columns)
-                to_append_df[col_index] = value
-                print(to_append_df)
-                df = df.append(pd.Series(to_append_df, index=df.columns), ignore_index=True)
-                print(df.head)
-            else:
-                index = NAs[0]
-                df.loc[index,category] = value
-            
-            df.to_csv("Data.csv",index=False)
-
-            Newmaster.destroy()  # quit the new window
         else:
-            messagebox.showerror(
-                "showerror", "Enter a correct name that follow the rules!")
-            Newmaster.lift()
+            # Test if the format correspond
+            if category == "OR":
+                if bool(re.search("[A-Z]{1}[a-z]+OR\d", str(value))):
+                    correct = True
 
-    def createNewElementOdor(self,Newmaster):
+            if correct:
+                for i in self.widgetsName:
+                    if re.search(research, i):
+                        # take the existing list of OR and add the new one
+                        newlist = list(globals()[f"{i}"]["values"])
+                        newlist.append(value)
+                        globals()[f"{i}"]["values"] = newlist
+                        # set the current selection to the new OR created
+                        globals()[f"{i}"].current(
+                            (len(globals()[f"{i}"]["values"])-1))
+
+                df = pd.read_csv("Data.csv")
+                NAs = list(df.loc[pd.isna(df[category]), :].index)
+                if len(NAs) == 0:
+                    print(df.columns.get_loc(category))
+                    col_index = df.columns.get_loc(category)
+                    to_append_df = [pd.NA]*len(df.columns)
+                    to_append_df[col_index] = value
+                    print(to_append_df)
+                    df = df.append(
+                        pd.Series(to_append_df, index=df.columns), ignore_index=True)
+                    print(df.head)
+                else:
+                    index = NAs[0]
+                    df.loc[index, category] = value
+
+                df.to_csv("Data.csv", index=False)
+
+                Newmaster.destroy()  # quit the new window
+            else:
+                messagebox.showerror(
+                    "showerror", "Enter a correct name that follow the rules!")
+                Newmaster.lift()
+
+    def createNewElementOdor(self, Newmaster):
         value = self.newOdor.get()
 
-        CID = pcp.get_cids(str(value), 'name',
-                               'substance', list_return='flat')
-        
-        if len(CID) == 0:
+        CIDs = pcp.get_cids(str(value), 'name',
+                            'substance', list_return='flat')
+
+        if len(CIDs) == 0:
             message = "No molecules were found for:" + value + "!"
             messagebox.showerror(
                 "showerror", message)
             Newmaster.lift()
         else:
-            message = "Is " + CID[0] + " the molecule you wanted to add?"
+            chromedriver_autoinstaller.install()
+
+            options = webdriver.ChromeOptions()
+            options.add_argument("--headless")
+
+            driver = webdriver.Chrome()
+            driver.implicitly_wait(5)
+
+            compound_list = {}
+
+            url = "https://pubchem.ncbi.nlm.nih.gov/compound/" + str(CIDs[0])
+            driver.get(url)
+            name_content = driver.find_element(
+                By.XPATH, "//meta[@property='og:title']")
+            name_compound = name_content.get_attribute("content")
+            compound_list[CIDs[0]] = name_compound
+
+            message = "Is " + str(list(compound_list.values())
+                                  [0]) + " the molecule you wanted to add?"
             answer = messagebox.askyesno(message=message)
             if answer == True:
-                with open("Odorants.csv","a") as f:
-                    writer_object = csv.writer(f,sep=";")
-                    row = [CID[0],"",""]
+                with open("Odorants.csv", "a") as f:
+                    writer_object = csv.writer(f, delimiter=";")
+                    row = [str(list(compound_list.values())[0]), "", ""]
                     writer_object.writerow(row)
                     f.close()
+                    Newmaster.destroy()
             else:
-                for mol_id in CID[1:len(CID)]:
-                    message = "Is " + CID[mol_id] + " the molecule you wanted to add?"
+
+                for mol_id in CIDs[1:len(CIDs)]:
+
+                    url = "https://pubchem.ncbi.nlm.nih.gov/compound/" + \
+                        str(mol_id)
+                    driver.get(url)
+                    name_content = driver.find_element(
+                        By.XPATH, "//meta[@property='og:title']")
+                    name_compound = name_content.get_attribute("content")
+                    compound_list[mol_id] = name_compound
+
+                    message = "Is " + str(compound_list[mol_id]) + \
+                        " the molecule you wanted to add?"
                     answer = messagebox.askyesno(message=message)
                     if answer == True:
-                        with open("Odorants.csv","a") as f:
-                            writer_object = csv.writer(f,sep=";")
-                            row = [CID[mol_id],"",""]
+                        with open("Odorants.csv", "a") as f:
+                            writer_object = csv.writer(f, delimiter=";")
+                            row = [
+                                str(compound_list[mol_id]), "", ""]
                             writer_object.writerow(row)
                             f.close()
+                            Newmaster.destroy()
 
-            
-        print(CID)
-
-        
+            driver.quit()
 
     def selected_cond_num(self, event):
         # Function that detects when number of conditions changes and adapt things
@@ -651,37 +689,37 @@ class App(Tk):
         self.newORButton.grid(column=2, row=3, padx=(151, 5))
         self.newPromotorButton = Button(
             self.ScrollFrame, text="Create a new Promoter", command=lambda: self.addnewVar("Promoter"))
-        self.newPromotorButton.grid(column=3, row=3, padx=(0,5))
+        self.newPromotorButton.grid(column=3, row=3, padx=(0, 5))
         self.newDriverButton = Button(
             self.ScrollFrame, text="Create a new Driver", command=lambda: self.addnewVar("Driver"))
-        self.newDriverButton.grid(column=4, row=3, padx=(0,5))
+        self.newDriverButton.grid(column=4, row=3, padx=(0, 5))
         self.newTransgeneButton = Button(
             self.ScrollFrame, text="Create a new Transgene", command=lambda: self.addnewVar("Transgene"))
-        self.newTransgeneButton.grid(column=5, row=3, padx=(0,5))
+        self.newTransgeneButton.grid(column=5, row=3, padx=(0, 5))
         self.newReporterButton = Button(
             self.ScrollFrame, text="Create a new Reporter", command=lambda: self.addnewVar("Reporter"))
-        self.newReporterButton.grid(column=6, row=3, padx=(0,5))    
-    
+        self.newReporterButton.grid(column=6, row=3, padx=(0, 5))
+
     def addnewOdor(self):
         self.newWindow = Toplevel(self.master)
         self.newWindow.geometry("300x200")
-        title = "Create a new odor" 
+        title = "Create a new odor"
         self.newWindow.title(title)
 
         text = "Enter the new odor:"
         Label(self.newWindow, text=text).grid(row=1, column=0)
         self.newOdor = StringVar()
         self.newOdorEntry = Entry(self.newWindow, textvariable=self.newOdor)
-        self.newOdorEntry.grid(row=1, column=1,pady=20)
+        self.newOdorEntry.grid(row=1, column=1, pady=20)
         text = "Create new odor"
         Button(self.newWindow, text=text, command=lambda: self.createNewElementOdor(
             self.newWindow)).grid(row=2, column=1)
-        
-    def addnewVar(self,category):
+
+    def addnewVar(self, category):
         # Define initial values depending on which variable we change
         if category == "OR":
             message = """In order to create a new OR you must use the followings rules:\n\n   - The format of the OR should be the species then OR and finally the number(DmOR12)\n\n   - The species name should be the latin initials corresponding to the Genus (capital letter) and the species => (Dm for drosophila melanogaster)\n\n   - None of special character should be used (- ,_ ,/ ,etc...)
-        """ 
+        """
         elif category == "Driver":
             message = """In order to create a new Driver you must use the followings rules:\n\n ???
         """
@@ -700,8 +738,8 @@ class App(Tk):
         title = "Create a new " + category
         self.newWindow.title(title)
         self.textBox = Text(self.newWindow, height=20,
-                              width=70, font=('Arial', 11, 'bold'))
-    
+                            width=70, font=('Arial', 11, 'bold'))
+
         self.textBox.grid(row=0, column=0, columnspan=3, padx=50, pady=10)
         self.textBox.insert('end', message)
         self.textBox.config(state="disabled")
@@ -713,7 +751,7 @@ class App(Tk):
         self.newVarEntry.grid(row=1, column=1)
         text = "Create new " + category
         Button(self.newWindow, text=text, command=lambda: self.createNewElement(
-            self.newWindow,category=category)).grid(row=2, column=1)
+            self.newWindow, category=category)).grid(row=2, column=1)
 
     def callback(self, event):
         # Function to autoFill the conditions comboboxs
@@ -775,7 +813,8 @@ class App(Tk):
                                      text="Driver:"),
                                AutocompleteCombobox(self.frames[self.count], width=12,
                                                     values=self.replaced, textvariable=self.FirstReplaced),
-                               Label(self.frames[self.count], text="Transgene:"),
+                               Label(self.frames[self.count],
+                                     text="Transgene:"),
                                AutocompleteCombobox(self.frames[self.count], width=12,
                                                     values=self.KIKO, textvariable=self.FirstKIKO),
                                Label(self.frames[self.count],
@@ -808,7 +847,8 @@ class App(Tk):
                                      text="Driver:"),
                                AutocompleteCombobox(self.frames[self.count], width=12, state="readonly",
                                                     values=self.replaced),
-                               Label(self.frames[self.count], text="Transgene:"),
+                               Label(self.frames[self.count],
+                                     text="Transgene:"),
                                AutocompleteCombobox(self.frames[self.count], width=12,
                                                     values=self.KIKO),
                                Label(self.frames[self.count],
@@ -847,7 +887,7 @@ class App(Tk):
                         globals()[f"{x}"].bind(
                             "<<ComboboxSelected>>", self.callback)
                         globals()[f"{x}"].current(0)
-                    elif re.search("autocomplete",str(globals()[f"{x}"])):
+                    elif re.search("autocomplete", str(globals()[f"{x}"])):
                         globals()[f"{x}"].set_completion_list(
                             (globals()[f"{x}"]["values"]))
                         globals()[f"{x}"].focus_set()
@@ -882,22 +922,21 @@ class App(Tk):
             self.count += 1
 
     # Load the CSV file for the odours
-    def load_csv(self,filename):
+    def load_csv(self, filename):
         odour = dict()
         # Open file in read mode
-        file = open(filename,"r")
+        file = open(filename, "r")
         # Reading file
         csv_reader = csv.reader(file)
         first_line = True
         for row in csv_reader:
             if first_line:
-                first_line=False
+                first_line = False
                 continue
             odour[row[0]] = row[1]
-        
+
         return odour
-    
-    
+
     def drawOdorants(self):
         # Function to create the trials frames which all informations for each
 
@@ -915,7 +954,8 @@ class App(Tk):
                 row=(self.count+7+i), column=1, columnspan=3, pady=10)
 
             widgetsListOD = [Label(self.framesOD[self.countOD], text=str("Trial: " + str(i+1) + ":")),
-                             AutocompleteCombobox(self.framesOD[self.countOD], width=30, state="normal", values=self.odorList),
+                             AutocompleteCombobox(
+                                 self.framesOD[self.countOD], width=30, state="normal", values=self.odorList),
                              Label(self.framesOD[self.countOD], text=str(
                                  "Dilution: " + str(i+1) + ":")),
                              Combobox(self.framesOD[self.countOD], width=12, state="normal", values=list(
