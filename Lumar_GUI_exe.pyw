@@ -266,7 +266,7 @@ class App(Tk):
             self.rows.append(self.row)
 
         ### write the Trials_info.csv file ###
-        with open("C:/Users/irlab/Desktop/Lumar_GUI/Conditions_info.csv", "w", encoding='UTF8', newline='') as self.f:
+        with open("C:/Users/irlab/gh-repos/Lumar_GUI/Lumar_GUI/Conditions_info.csv", "w", encoding='UTF8', newline='') as self.f:
             writer = csv.writer(self.f, dialect='excel', delimiter=',')
             writer.writerow(self.header)
             for i in self.rows:
@@ -289,7 +289,7 @@ class App(Tk):
         ### if no water in between odors ###
         if(self.OdorantIB.get() == "None"):
 
-            for i in range(1, (int(self.OdorantNum.get())+1)):
+            for i in range(1, (int(self.OdorantNum.get())+2)):
                 self.row = []
 
                 ### exp_id ###
@@ -306,20 +306,18 @@ class App(Tk):
                     self.row.append(0)
                 else:
                     odor = str(
-                        globals()[f"{self.widgetsNameOD[int(((i-2)*self.NumColODFrame)+1)]}"].get())
+                        globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+1)]}"].get())
                     dilution = str(
-                        globals()[f"{self.widgetsNameOD[int(((i-2)*self.NumColODFrame)+3)]}"].get())
+                        globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+3)]}"].get())
                     if odor in diff_odors:
                         if odor not in id_repeat.keys():
                             id_repeat[odor] = 2
                         else:
                             id_repeat[odor] = id_repeat[odor]+1
-                            
-                        odor = odor + "_" + str(id_repeat[odor])
                     else:
                         diff_odors.append(odor)
 
-                    
+                    odor = odor + "_" + str(id_repeat[odor])
 
                     self.row.append(odor)
                     self.row.append(dilution)
@@ -378,7 +376,7 @@ class App(Tk):
                 self.rows.append(self.row)
 
         ### write the Trials_info.csv file ###
-        with open("C:/Users/irlab/Desktop/Lumar_GUI/Trials_info.csv", "w", encoding='UTF8', newline='') as self.f:
+        with open("C:/Users/irlab/gh-repos/Lumar_GUI/Lumar_GUI/Trials_info.csv", "w", encoding='UTF8', newline='') as self.f:
             writer = csv.writer(self.f, dialect='excel', delimiter=',')
             writer.writerow(self.header)
             for i in self.rows:
@@ -430,7 +428,7 @@ class App(Tk):
 
         ### Odorants ###
         if self.OdorantIB.get() == "None":
-            self.row.append(int(self.OdorantNum.get())+1)
+            self.row.append(int(self.OdorantNum.get()+1))
         else:
             self.row.append((int(self.OdorantNum.get())*2+1))
 
@@ -457,7 +455,7 @@ class App(Tk):
                     globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+5)]}"].get())
                 list_vials.append(vial_number)
         else:
-            # if we do have an in between odorant just intercal it between testing odors
+            # if we do have an ib between odorant just intercal it between testing odors
             for i in range(1, (int(self.OdorantNum.get())+1)):
                 self.row.append(IBOD_name[(i-1)])
                 text = globals()[f"{self.widgetsNameOD[int(((i-1)*self.NumColODFrame)+1)]}"].get() + "_e" + \
@@ -475,8 +473,8 @@ class App(Tk):
                 list_vials.append(vial_number)
                 list_vials.append(1)
 
-            last_water = IBOD_name[(len(IBOD_name)-1)]
-            self.row.append(last_water)
+        last_water = IBOD_name[(len(IBOD_name)-1)]
+        self.row.append(last_water)
 
         ### Remarks ###
         remark = ""
@@ -487,7 +485,7 @@ class App(Tk):
             remark += "/"
         self.row.append(remark)
 
-        with open("C:/Users/irlab/Desktop/Lumar_GUI/Exp_Infos.csv", "w", encoding='UTF8', newline='') as self.f:
+        with open("C:/Users/irlab/gh-repos/Lumar_GUI/Lumar_GUI/Exp_Infos.csv", "w", encoding='UTF8', newline='') as self.f:
             writer = csv.writer(self.f, dialect='excel', delimiter=',')
             writer.writerow(self.header)
             writer.writerow(self.row)
@@ -793,7 +791,7 @@ class App(Tk):
         self.FirstKIKO = StringVar()
         self.widgetsName = ["self.widget_%d_%d" % (x, j) for x in range(
             1, (int(self.CondNum.get())+1)) for j in range(self.NumColCondFrame)]
-        
+
         for i in range(int(self.CondNum.get())):
             self.frames.append(
                 Frame(self.ScrollFrame, borderwidth=1, relief="solid", height=300))
@@ -873,27 +871,27 @@ class App(Tk):
 
             id_widgets = 0
             listtoappend = []
-            predefined_selections = [0,5,2,1]
             for x in self.widgetsName[(i*self.NumColCondFrame):((i+1)*self.NumColCondFrame)]:
                 globals()[f"{x}"] = widgetsList[id_widgets]
-                print(globals()[f"{x}"])
+
                 if re.search("combobox", str(globals()[f"{x}"])):
                     if re.search("!combobox4", str(globals()[f"{x}"])):
                         # select day of emergence as 3
                         globals()[f"{x}"].current(2)
                     elif (x == self.widgetsName[2]) | (x == self.widgetsName[4]) | (x == self.widgetsName[6]) | (x == self.widgetsName[8]):
                         # If first condition we add this function to autofill
+                        print(str(globals()[f"{x}"]))
                         globals()[f"{x}"].set_completion_list(
                             (globals()[f"{x}"]["values"]))
                         globals()[f"{x}"].focus_set()
                         globals()[f"{x}"].bind(
                             "<<ComboboxSelected>>", self.callback)
-                        globals()[f"{x}"].current(predefined_selections[int((id_widgets/2)-1)])
+                        globals()[f"{x}"].current(0)
                     elif re.search("autocomplete", str(globals()[f"{x}"])):
                         globals()[f"{x}"].set_completion_list(
                             (globals()[f"{x}"]["values"]))
                         globals()[f"{x}"].focus_set()
-                        globals()[f"{x}"].current(predefined_selections[int((id_widgets/2)-1)])
+                        globals()[f"{x}"].current(0)
                     else:
                         globals()[f"{x}"].current(0)
 

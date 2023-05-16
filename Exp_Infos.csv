@@ -1,2 +1,2 @@
-Exp_id,Conditions,Condition 1,Condition 2,Condition 3,Condition4,Antennas,Odorant Trials,Remarks,Trial 1,Trial 2,Trial 3,Trial 4,Remarks Cond 1
-1_03172023,1,DmOR1_OR22ab_Boosted Gal4_Knockin_GCaMP7f_F_M_3,NA,NA,NA,6,2,cond_1_/
+Exp_id,Conditions,Condition 1,Condition 2,Condition 3,Condition4,Antennas,Odorant Trials,Trial 1,Trial 2,Trial 3,Trial 4,Trial 5,Trial 6,Trial 7,Remarks
+1_04032023,3,Endogenous_ORCO_Transgene_Gal4_GCaMP7f_F_M_3,DmOR7a_ORCO_Transgene_Gal4_GCaMP7f_F_M_3,DmOR43b_ORCO_Transgene_Gal4_GCaMP7f_F_M_3,NA,6,7,water 1,Benzaldehyde_e3,water 2,1-Octen-3-OL_e3,water 3, Apple Juice_e3,water 4,cond_1_/cond_2_/cond_3_/

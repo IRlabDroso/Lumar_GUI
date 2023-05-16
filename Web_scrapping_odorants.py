@@ -1,8 +1,4 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import chromedriver_autoinstaller
+
 import pubchempy as pcp
 import csv
 import re
@@ -25,6 +21,7 @@ with open("Odorants.csv", "r") as f:
             print(i)
             CID = pcp.get_cids(str(i[0]), 'name',
                                'substance', list_return='flat')
+                               
             if len(CID) == 0:
                 notfound.append(i[0])
                 print("notfound")
