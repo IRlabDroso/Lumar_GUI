@@ -571,9 +571,11 @@ class App(Tk):
                     col_index = df.columns.get_loc(category)
                     to_append_df = [pd.NA]*len(df.columns)
                     to_append_df[col_index] = value
-                    print(to_append_df)
-                    df = df.append(
-                        pd.Series(to_append_df, index=df.columns), ignore_index=True)
+                    print(df.columns)
+                    print(pd.DataFrame([to_append_df], columns=df.columns))
+                    df = pd.concat([df,pd.DataFrame([to_append_df], columns=df.columns)],ignore_index=True, )
+                    #df = df.append(
+                    #    pd.Series(to_append_df, index=df.columns), ignore_index=True)
                     print(df.head)
                 else:
                     index = NAs[0]
@@ -589,68 +591,86 @@ class App(Tk):
 
     def createNewElementOdor(self, Newmaster):
         value = self.newOdor.get()
+        odor = pd.read_csv("Corrected_odors.csv")
+        to_append = ["NA",str(value)]
+        odor = pd.concat([odor,pd.DataFrame([to_append],columns=odor.columns)],ignore_index=True)
+        odor.to_csv("Corrected_odors.csv", index=False)
+        print(odor)
+        
+        for i in self.widgetsNameOD:
+            print(i)
+            print(globals()[f"{i}"])
+            if re.search("\d{1,9}_1", i):
+                if value not in list(globals()[f"{i}"]["values"]):
+                     # take the existing list of OR and add the new one
+                    newlist = list(globals()[f"{i}"]["values"])
+                    newlist.append(value)
+                    globals()[f"{i}"]["values"] = newlist
+                    # set the current selection to the new OR created
+                    globals()[f"{i}"].current((len(globals()[f"{i}"]["values"])-1))
+        Newmaster.destroy()
 
-        CIDs = pcp.get_cids(str(value), 'name',
-                            'substance', list_return='flat')
+        # CIDs = pcp.get_cids(str(value), 'name',
+        #                     'substance', list_return='flat')
 
-        if len(CIDs) == 0:
-            message = "No molecules were found for:" + value + "!"
-            messagebox.showerror(
-                "showerror", message)
-            Newmaster.lift()
-        else:
-            chromedriver_autoinstaller.install()
+        # if len(CIDs) == 0:
+        #     message = "No molecules were found for:" + value + "!"
+        #     messagebox.showerror(
+        #         "showerror", message)
+        #     Newmaster.lift()
+        # else:
+        #     chromedriver_autoinstaller.install()
 
-            options = webdriver.ChromeOptions()
-            options.add_argument("--headless")
+        #     options = webdriver.ChromeOptions()
+        #     options.add_argument("--headless")
 
-            driver = webdriver.Chrome()
-            driver.implicitly_wait(5)
+        #     driver = webdriver.Chrome()
+        #     driver.implicitly_wait(5)
 
-            compound_list = {}
+        #     compound_list = {}
 
-            url = "https://pubchem.ncbi.nlm.nih.gov/compound/" + str(CIDs[0])
-            driver.get(url)
-            name_content = driver.find_element(
-                By.XPATH, "//meta[@property='og:title']")
-            name_compound = name_content.get_attribute("content")
-            compound_list[CIDs[0]] = name_compound
+        #     url = "https://pubchem.ncbi.nlm.nih.gov/compound/" + str(CIDs[0])
+        #     driver.get(url)
+        #     name_content = driver.find_element(
+        #         By.XPATH, "//meta[@property='og:title']")
+        #     name_compound = name_content.get_attribute("content")
+        #     compound_list[CIDs[0]] = name_compound
 
-            message = "Is " + str(list(compound_list.values())
-                                  [0]) + " the molecule you wanted to add?"
-            answer = messagebox.askyesno(message=message)
-            if answer == True:
-                with open("Odorants.csv", "a") as f:
-                    writer_object = csv.writer(f, delimiter=";")
-                    row = [str(list(compound_list.values())[0]), "", ""]
-                    writer_object.writerow(row)
-                    f.close()
-                    Newmaster.destroy()
-            else:
+        #     message = "Is " + str(list(compound_list.values())
+        #                           [0]) + " the molecule you wanted to add?"
+        #     answer = messagebox.askyesno(message=message)
+        #     if answer == True:
+        #         with open("Odorants.csv", "a") as f:
+        #             writer_object = csv.writer(f, delimiter=";")
+        #             row = [str(list(compound_list.values())[0]), "", ""]
+        #             writer_object.writerow(row)
+        #             f.close()
+        #             Newmaster.destroy()
+        #     else:
 
-                for mol_id in CIDs[1:len(CIDs)]:
+        #         for mol_id in CIDs[1:len(CIDs)]:
 
-                    url = "https://pubchem.ncbi.nlm.nih.gov/compound/" + \
-                        str(mol_id)
-                    driver.get(url)
-                    name_content = driver.find_element(
-                        By.XPATH, "//meta[@property='og:title']")
-                    name_compound = name_content.get_attribute("content")
-                    compound_list[mol_id] = name_compound
+        #             url = "https://pubchem.ncbi.nlm.nih.gov/compound/" + \
+        #                 str(mol_id)
+        #             driver.get(url)
+        #             name_content = driver.find_element(
+        #                 By.XPATH, "//meta[@property='og:title']")
+        #             name_compound = name_content.get_attribute("content")
+        #             compound_list[mol_id] = name_compound
 
-                    message = "Is " + str(compound_list[mol_id]) + \
-                        " the molecule you wanted to add?"
-                    answer = messagebox.askyesno(message=message)
-                    if answer == True:
-                        with open("Odorants.csv", "a") as f:
-                            writer_object = csv.writer(f, delimiter=";")
-                            row = [
-                                str(compound_list[mol_id]), "", ""]
-                            writer_object.writerow(row)
-                            f.close()
-                            Newmaster.destroy()
+        #             message = "Is " + str(compound_list[mol_id]) + \
+        #                 " the molecule you wanted to add?"
+        #             answer = messagebox.askyesno(message=message)
+        #             if answer == True:
+        #                 with open("Odorants.csv", "a") as f:
+        #                     writer_object = csv.writer(f, delimiter=";")
+        #                     row = [
+        #                         str(compound_list[mol_id]), "", ""]
+        #                     writer_object.writerow(row)
+        #                     f.close()
+        #                     Newmaster.destroy()
 
-            driver.quit()
+        #     driver.quit()
 
     def selected_cond_num(self, event):
         # Function that detects when number of conditions changes and adapt things
