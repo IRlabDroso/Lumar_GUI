@@ -981,11 +981,11 @@ class App(Tk):
                              Label(self.framesOD[self.countOD], text=str(
                                  "Dilution: " + str(i+1) + ":")),
                              Combobox(self.framesOD[self.countOD], width=12, state="normal", values=list(
-                                 range(1, 10))),
+                                 range(1, 50))),
                              Label(self.framesOD[self.countOD],
                                    text=str("Vial number: ")),
                              Combobox(self.framesOD[self.countOD], width=12, state="normal", values=list(
-                                 range(1, 20)))
+                                 range(1, 50)))
                              ]
 
             id_widgets = 0
